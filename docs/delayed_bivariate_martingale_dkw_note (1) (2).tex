@@ -1,0 +1,2339 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools,bm}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{microtype}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{assumption}[theorem]{Assumption}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{definition}[theorem]{Definition}
+
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Pp}{\mathbb{P}}
+\newcommand{\F}{\mathcal{F}}
+\newcommand{\G}{\mathcal{G}}
+\newcommand{\Q}{\mathcal{Q}}
+\newcommand{\I}{\mathcal{I}}
+\newcommand{\cE}{\mathcal{E}}
+\newcommand{\1}{\mathbf{1}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\eps}{\varepsilon}
+\newcommand{\whp}{\widehat p}
+\newcommand{\bp}{\bar p}
+\newcommand{\lp}{\underline p}
+\newcommand{\up}{\overline p}
+
+\title{Delayed Bivariate Martingale DKW-Type Bounds\\
+for Online Pairwise Event Probabilities}
+\author{Working technical note}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We study online estimation of a bivariate lower-orthant probability when each
+observation is revealed only after a fixed delay and the observations may be
+adaptively dependent.  The target is the running average of origin-conditional
+bivariate CDFs,
+\[
+    p_k(a,b)
+    =
+    \Pp(B_{k,1}\le a,\,B_{k,2}\le b\mid \F_k),
+\]
+rather than an i.i.d. population CDF.  A delay-$d$ staggering construction
+turns the delayed observations into $d$ martingale-difference streams.  On a
+finite bivariate query grid, conditional Hoeffding concentration then yields a
+single high-probability event that is simultaneous over grid points, residue
+classes, edges, and online sample sizes.  Aggregating the staggered streams
+gives the explicit delay-aware DKW-type width
+\[
+    \sqrt{
+        \frac{d}{2N_t}
+        \log\!\left(
+            \frac{\pi^2 dQ N_t^2}{3\delta}
+        \right)
+    },
+\]
+where $N_t$ is the number of fully resolved origins by physical time $t$.
+When $N_t\asymp t$, this is
+\[
+    O\!\left(
+        \sqrt{
+            \frac{d}{t}
+            \log\!\left(\frac{dQt^2}{\delta}\right)
+        }
+    \right).
+\]
+If the conditional bivariate CDF is stable, this is a confidence band for the
+common CDF.  If the CDF drifts, the same statistical term combines with an
+explicit tracking-bias term; a finite-horizon moving-window version is also
+derived.  We additionally study adaptive convex aggregation of several memory
+scales.  A simultaneous confidence event remains valid after data-dependent
+aggregation, while a residue-wise fixed-share update yields interval-wise
+adaptive regret for Brier loss and therefore an oracle inequality for average
+squared CDF estimation error.  A cumulative lower-orthant variation budget then
+turns this oracle inequality into an explicit nonstationary estimation bound,
+with the meta-learner adapting to the unknown variation scale through its choice
+of memory.  The note is deliberately finite-grid: under
+arbitrary adapted data, a continuum-uniform martingale DKW extension is not
+automatic, and sequential rather than classical empirical-process complexity
+is the relevant object.
+\end{abstract}
+
+\section{Motivation and scope}
+
+Many online problems require estimating a probability of simultaneous events.
+A useful representation is
+\begin{equation}
+    p_k(a,b)
+    :=
+    \Pp\!\left(
+        B_{k,1}\le a,\;B_{k,2}\le b
+        \mid \F_k
+    \right),
+    \label{eq:conditional-cdf}
+\end{equation}
+where $B_k=(B_{k,1},B_{k,2})$ is generated at origin $k$ but is only fully
+observed after a delay.  In the trajectory-risk application motivating this
+note, $B_k$ is a pair of critical conformal levels and
+$p_k(a,b)$ is the joint failure probability of two forecast horizons at
+marginal risk levels $(a,b)$.
+
+The classical Dvoretzky--Kiefer--Wolfowitz (DKW) inequality concerns an i.i.d.
+empirical CDF.  Here we instead want three features simultaneously:
+\begin{enumerate}[leftmargin=*]
+    \item \emph{adaptive dependence}: no independence across origins is assumed;
+    \item \emph{bivariate queries}: the object of interest is a lower-orthant CDF;
+    \item \emph{delayed observation}: $B_k$ is unavailable at the time its
+    conditional law in \eqref{eq:conditional-cdf} is defined.
+\end{enumerate}
+
+The main result below is a finite-grid martingale analogue of a bivariate DKW
+bound.  It does not require i.i.d. data, stationarity, mixing, or independence
+between edges.  The price is that the theorem controls a finite collection of
+lower-orthant queries rather than the entire continuum.
+
+\section{Relation to martingale empirical-process results}
+
+Rakhlin, Sridharan, and Tewari study the dependent empirical process
+\begin{equation}
+    \frac1n\sum_{i=1}^n
+    \left(
+        f(Z_i)-\E[f(Z_i)\mid \mathcal A_{i-1}]
+    \right)
+    \label{eq:rst-process}
+\end{equation}
+uniformly over a function class $f\in\mathcal H$, using sequential
+symmetrization, sequential covering numbers, and sequential fat-shattering
+complexity \cite{rakhlin2015}.  Their Lemmas 10--11 give high-probability
+bounds of precisely this martingale-empirical-process form.
+
+Yin, Agrawal, and Zeevi use these results to state a martingale version of the
+univariate DKW inequality for adaptive reported values \cite{yin2022}.  Their
+Lemma 1 compares the empirical CDF to the running average conditional CDF,
+which is the same type of target used in this note.
+
+There is, however, an important verification point.  Rakhlin et al. emphasize
+that the relevant complexity under arbitrary adapted dependence is
+\emph{sequential} complexity, and they explicitly note that classical
+threshold classes need not satisfy unrestricted sequential uniform
+convergence.  Consequently, extending a continuum-uniform univariate
+martingale DKW statement to bivariate lower orthants cannot be justified merely
+from ordinary VC dimension or ordinary fat-shattering dimension.
+
+For this reason, the main theorem here avoids a continuum-complexity claim.  We
+work on a finite query grid and prove the concentration result directly from
+conditional Hoeffding inequalities.  The result is therefore self-contained
+once the delayed martingale filtration is established.
+
+Mineiro and Howard provide another complementary viewpoint: time-uniform and
+value-uniform confidence bands for the \emph{running averaged conditional CDF}
+under nonstationarity \cite{mineiro2023}.  This reinforces an important
+interpretation used below: absent additional temporal regularity, the natural
+martingale target is an average of conditional laws, not an arbitrary current
+conditional law.
+
+\section{Delayed bivariate observations}
+
+Let $(\F_t)_{t\ge0}$ be a filtration representing information available at
+physical time $t$.  Fix one pairwise process with deterministic delay
+$d\in\mathbb N$.  For every origin $k\ge1$, let
+\[
+    B_k=(B_{k,1},B_{k,2})\in\R^2
+\]
+be measurable with respect to $\F_{k+d}$.  Thus the pair generated at origin
+$k$ is fully observed by physical time $k+d$.
+
+Let
+\[
+    \Q=\G_1\times\G_2
+\]
+be a finite set of lower-orthant queries, with
+$Q:=|\Q|$.  In the common square-grid case,
+$\G_1=\G_2=\G$ and $Q=M^2$ where $M=|\G|$.
+
+For $g=(a,b)\in\Q$, define
+\begin{align}
+    X_k(g)
+    &:=
+    \1\{B_{k,1}\le a,\;B_{k,2}\le b\},
+    \label{eq:Xkg}
+    \\
+    p_k(g)
+    &:=
+    \E[X_k(g)\mid\F_k].
+    \label{eq:pkg}
+\end{align}
+The function $g\mapsto p_k(g)$ is the origin-$k$ conditional bivariate CDF
+restricted to the query set $\Q$.
+
+\subsection{Why delay breaks the naive martingale indexing}
+
+The centered variable
+\[
+    X_k(g)-p_k(g)
+\]
+has mean zero conditional on $\F_k$, but it is not observed until time $k+d$.
+If all origins are indexed consecutively, then the filtration immediately
+preceding the reveal of $X_k(g)$ contains information strictly beyond $\F_k$.
+Thus the sequence is not automatically a martingale-difference sequence with
+respect to the reveal-time filtration while retaining $p_k(g)$ as the target.
+
+The following staggering construction fixes this exactly.
+
+\section{Staggered delayed martingale streams}
+
+For residue $c\in\{1,\ldots,d\}$, define the origins
+\begin{equation}
+    k_{c,i}
+    :=
+    c+(i-1)d,
+    \qquad i=1,2,\ldots.
+    \label{eq:origin-residue}
+\end{equation}
+Define the staggered filtration
+\begin{equation}
+    \mathcal H_{c,i}
+    :=
+    \F_{c+id}.
+    \label{eq:staggered-filtration}
+\end{equation}
+Then
+\[
+    \mathcal H_{c,i-1}
+    =
+    \F_{k_{c,i}},
+\]
+and $B_{k_{c,i}}$ is measurable with respect to
+$\mathcal H_{c,i}$ because
+$k_{c,i}+d=c+id$.
+
+For $g\in\Q$, write
+\begin{align}
+    X_{c,i}(g)
+    &:= X_{k_{c,i}}(g),
+    \\
+    p_{c,i}(g)
+    &:= p_{k_{c,i}}(g),
+    \\
+    D_{c,i}(g)
+    &:= X_{c,i}(g)-p_{c,i}(g).
+\end{align}
+
+\begin{lemma}[Delayed martingale difference]
+\label{lem:delayed-mds}
+For every residue $c$ and query $g\in\Q$,
+$(D_{c,i}(g))_{i\ge1}$ is a martingale-difference sequence with respect to
+$(\mathcal H_{c,i})_{i\ge0}$, and $D_{c,i}(g)\in[-1,1]$.
+\end{lemma}
+
+\begin{proof}
+The variable $X_{c,i}(g)$ is $\mathcal H_{c,i}$-measurable.  Moreover,
+\[
+    \E[X_{c,i}(g)\mid\mathcal H_{c,i-1}]
+    =
+    \E[X_{k_{c,i}}(g)\mid\F_{k_{c,i}}]
+    =
+    p_{c,i}(g).
+\]
+Hence
+$\E[D_{c,i}(g)\mid\mathcal H_{c,i-1}]=0$.
+Since $X_{c,i}(g)\in\{0,1\}$ and $p_{c,i}(g)\in[0,1]$, the increment lies in
+$[-1,1]$.
+\end{proof}
+
+The staggering is therefore a filtration device.  It is not an independence
+assumption and it does not assert that different residue classes are
+independent.
+
+\section{A time-uniform finite-grid martingale DKW-type bound}
+
+For one residue class, define the empirical and average conditional CDFs
+\begin{align}
+    \widehat p_{c,n}(g)
+    &:=
+    \frac1n\sum_{i=1}^n X_{c,i}(g),
+    \label{eq:residue-empirical}
+    \\
+    \bar p_{c,n}(g)
+    &:=
+    \frac1n\sum_{i=1}^n p_{c,i}(g).
+    \label{eq:residue-target}
+\end{align}
+
+\begin{theorem}[Anytime delayed bivariate grid bound]
+\label{thm:single-edge-anytime}
+Fix $\delta\in(0,1)$.  For $n\ge1$, define
+\begin{equation}
+    r_n(\delta)
+    :=
+    \sqrt{
+        \frac{1}{2n}
+        \log\!\left(
+            \frac{\pi^2 dQ n^2}{3\delta}
+        \right)
+    }.
+    \label{eq:rn-single}
+\end{equation}
+Then, with probability at least $1-\delta$,
+\begin{equation}
+    \left|
+        \widehat p_{c,n}(g)-\bar p_{c,n}(g)
+    \right|
+    \le
+    r_n(\delta)
+    \label{eq:residue-band}
+\end{equation}
+simultaneously for every residue $c\in\{1,\ldots,d\}$, every query
+$g\in\Q$, and every sample size $n\ge1$.
+\end{theorem}
+
+\begin{proof}
+Fix $c$, $g$, and $n$.  Conditional Hoeffding concentration for the bounded
+martingale-difference sequence in Lemma~\ref{lem:delayed-mds} gives
+\[
+    \Pp\!\left(
+        \left|
+            \widehat p_{c,n}(g)-\bar p_{c,n}(g)
+        \right|>x
+    \right)
+    \le
+    2e^{-2nx^2}.
+\]
+With $x=r_n(\delta)$, the right-hand side equals
+\[
+    \frac{6\delta}{\pi^2 dQ n^2}.
+\]
+Union bounding over $d$ residues and $Q$ grid queries, and then over all
+$n\ge1$, gives total failure probability at most
+\[
+    dQ\sum_{n=1}^\infty
+    \frac{6\delta}{\pi^2 dQ n^2}
+    =
+    \delta.
+\]
+\end{proof}
+
+\begin{remark}[One confidence parameter]
+The proof uses multiplicity mathematically, but the algorithm requires only one
+user-specified level $\delta$.  The factors $d$ and $Q$ appear logarithmically
+inside a single global radius.  There is no need to maintain separate
+confidence levels $\delta_{c,g}$.
+\end{remark}
+
+\section{Aggregating residues into one bivariate CDF estimate}
+
+At physical time $t$, let $n_{t,c}$ be the number of fully resolved origins in
+residue $c$, and define
+\[
+    N_t:=\sum_{c=1}^d n_{t,c}.
+\]
+With one origin issued at every physical time and no missing observations,
+$N_t=(t-d)_+$ up to the initial indexing convention.
+
+Define the aggregate empirical CDF and its aggregate conditional target by
+\begin{align}
+    \widehat p_t(g)
+    &:=
+    \frac1{N_t}
+    \sum_{c=1}^d
+    \sum_{i=1}^{n_{t,c}}
+    X_{c,i}(g),
+    \label{eq:aggregate-empirical}
+    \\
+    \bar p_t(g)
+    &:=
+    \frac1{N_t}
+    \sum_{c=1}^d
+    \sum_{i=1}^{n_{t,c}}
+    p_{c,i}(g).
+    \label{eq:aggregate-target}
+\end{align}
+When $N_t=0$, the estimate is left undefined.
+
+\begin{corollary}[Edge-level delayed CDF band]
+\label{cor:aggregate-band}
+On the event of Theorem~\ref{thm:single-edge-anytime}, for every $t$ with
+$N_t>0$ and every $g\in\Q$,
+\begin{equation}
+    \left|
+        \widehat p_t(g)-\bar p_t(g)
+    \right|
+    \le
+    E_t,
+    \qquad
+    E_t
+    :=
+    \sum_{c:n_{t,c}>0}
+    \frac{n_{t,c}}{N_t}
+    r_{n_{t,c}}(\delta).
+    \label{eq:exact-Et}
+\end{equation}
+Moreover,
+\begin{equation}
+    \boxed{
+    E_t
+    \le
+    \sqrt{
+        \frac{d}{2N_t}
+        \log\!\left(
+            \frac{\pi^2 dQ N_t^2}{3\delta}
+        \right)
+    }.
+    }
+    \label{eq:simple-Et}
+\end{equation}
+When one origin is issued at every physical time and no observations are
+missing, $N_t=(t-d)_+$ up to the indexing convention.  Therefore the preceding
+bound can be written explicitly as
+\[
+    E_t
+    \le
+    \sqrt{
+        \frac{d}{2(t-d)}
+        \left[
+            2\log(t-d)
+            +
+            \log\!\left(\frac{\pi^2 dQ}{3\delta}\right)
+        \right]
+    },
+    \qquad t>d,
+\]
+and hence, when $t\gg d$,
+\[
+    E_t
+    =
+    O\!\left(
+        \sqrt{
+            \frac{d}{t}
+            \log\!\left(\frac{dQt^2}{\delta}\right)
+        }
+    \right).
+\]
+\end{corollary}
+
+\begin{proof}
+The first inequality follows by writing the aggregate difference as the
+weighted sum of the residue-level differences.  For the second, set
+\[
+    L_t
+    :=
+    \log\!\left(
+        \frac{\pi^2 dQ N_t^2}{3\delta}
+    \right).
+\]
+Since $n_{t,c}\le N_t$,
+$r_{n_{t,c}}(\delta)\le\sqrt{L_t/(2n_{t,c})}$.  Therefore
+\begin{align*}
+    E_t
+    &\le
+    \frac{\sqrt{L_t/2}}{N_t}
+    \sum_{c:n_{t,c}>0}\sqrt{n_{t,c}}
+    \\
+    &\le
+    \frac{\sqrt{L_t/2}}{N_t}
+    \sqrt{d\sum_c n_{t,c}}
+    =
+    \sqrt{\frac{dL_t}{2N_t}},
+\end{align*}
+where the second inequality is Cauchy--Schwarz.
+\end{proof}
+
+\section{What distribution is being estimated?}
+
+The martingale theorem controls
+\[
+    \bar p_t(g)
+    =
+    \frac1{N_t}\sum_{k\in\I_t} p_k(g),
+\]
+the running average of the origin-conditional bivariate CDFs over resolved
+origins $\I_t$.  This distinction is fundamental.
+
+\subsection{Stable conditional CDF}
+
+\begin{assumption}[Stable conditional bivariate CDF]
+\label{ass:stable-conditional}
+There exists a function $p:\Q\to[0,1]$ such that
+\[
+    p_k(g)=p(g)
+\]
+for every origin $k$ and query $g\in\Q$.
+\end{assumption}
+
+This is not an i.i.d. assumption.  The realized pairs $B_k$ may be serially
+dependent and may overlap in physical time.  The assumption says only that the
+origin-conditional lower-orthant probabilities are invariant.
+
+\begin{corollary}[Delayed bivariate confidence band under conditional stability]
+\label{cor:stable-band}
+Under Assumption~\ref{ass:stable-conditional}, with probability at least
+$1-\delta$,
+\begin{equation}
+    \sup_{g\in\Q}
+    \left|
+        \widehat p_t(g)-p(g)
+    \right|
+    \le E_t
+    \label{eq:stable-cdf-band}
+\end{equation}
+simultaneously for all physical times $t$ with $N_t>0$.
+Consequently,
+\begin{align}
+    \underline p_t(g)
+    &:=
+    \left[\widehat p_t(g)-E_t\right]_+,
+    \\
+    \overline p_t(g)
+    &:=
+    \left[\widehat p_t(g)+E_t\right]_1
+\end{align}
+form simultaneous lower and upper confidence surfaces on $\Q$.
+\end{corollary}
+
+Because the same scalar $E_t$ is subtracted from every grid point, the lower
+surface preserves coordinatewise monotonicity of the empirical bivariate CDF.
+
+\subsection{Changing conditional CDFs}
+
+If $p_k$ varies with $k$, the statistical theorem remains valid for the running
+average $\bar p_t$.  To compare the empirical CDF with the current conditional
+CDF $p_t$, define the deterministic tracking discrepancy
+\begin{equation}
+    B_t
+    :=
+    \sup_{g\in\Q}
+    \left|p_t(g)-\bar p_t(g)\right|.
+    \label{eq:tracking-Bt}
+\end{equation}
+Then on the same event,
+\begin{equation}
+    \sup_{g\in\Q}
+    \left|
+        \widehat p_t(g)-p_t(g)
+    \right|
+    \le
+    E_t+B_t.
+    \label{eq:current-decomp}
+\end{equation}
+Thus statistical martingale error and temporal tracking error separate
+additively.
+
+A convenient sufficient condition is bounded one-step variation.  Let
+\begin{equation}
+    v_u
+    :=
+    \sup_{g\in\Q}
+    |p_{u+1}(g)-p_u(g)|.
+    \label{eq:variation-vu}
+\end{equation}
+Then
+\begin{equation}
+    B_t
+    \le
+    \frac1{N_t}
+    \sum_{k\in\I_t}
+    \sum_{u=k}^{t-1}v_u.
+    \label{eq:variation-full-history}
+\end{equation}
+This bound also shows why a full-history estimator may track a moving CDF
+poorly: old observations accumulate temporal bias.
+
+\section{Finite-horizon moving-window bound}
+
+For a drifting CDF, a recent-window estimator is more natural.  This section
+gives a finite-horizon version with a sharp dependence on the window size.
+Fix a terminal physical horizon $T_{\max}$.  Consider any consecutive interval
+of observations within a residue stream, of length $m$.
+
+\begin{lemma}[Uniform concentration over residue intervals]
+\label{lem:interval}
+Let
+\[
+    C_0:=dQ.
+\]
+With probability at least $1-\delta$, every residue $c$, every query $g\in\Q$,
+and every consecutive interval of residue indices contained before
+$T_{\max}$ satisfy
+\begin{equation}
+    \left|
+        \frac1m\sum_{i=a+1}^{a+m}D_{c,i}(g)
+    \right|
+    \le
+    r_m^{\mathrm{win}},
+    \qquad
+    r_m^{\mathrm{win}}
+    :=
+    \sqrt{
+        \frac1{2m}
+        \log\!\left(
+            \frac{C_0T_{\max}^2}{\delta}
+        \right)
+    }.
+    \label{eq:window-radius}
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+For any fixed interval, conditional Hoeffding gives probability at most
+$2e^{-2m(r_m^{\mathrm{win}})^2}=2\delta/(C_0T_{\max}^2)$.
+There are at most $T_{\max}^2/2$ index intervals in each residue stream, and
+$C_0=dQ$ residue-query pairs.  A union bound gives total failure probability at
+most $\delta$.
+\end{proof}
+
+Now let $\widehat p_t^{(W)}(g)$ use the $W$ most recent fully resolved origins
+for the edge.  Combining the residue streams as before yields the statistical
+bound
+\begin{equation}
+    \sup_{g\in\Q}
+    \left|
+        \widehat p_t^{(W)}(g)
+        -
+        \bar p_t^{(W)}(g)
+    \right|
+    \le
+    \sqrt{
+        \frac{d}{2W}
+        \log\!\left(
+            \frac{dQ T_{\max}^2}{\delta}
+        \right)
+    }.
+    \label{eq:window-statistical}
+\end{equation}
+
+Suppose additionally that
+\begin{equation}
+    \sup_{g\in\Q}|p_{u+1}(g)-p_u(g)|\le\rho
+    \qquad\text{for all }u.
+    \label{eq:rho-drift}
+\end{equation}
+The newest fully resolved origin is at least $d$ time steps old.  The $W$
+consecutive resolved origins have ages $d,d+1,\ldots,d+W-1$, so
+\begin{equation}
+    \sup_{g\in\Q}
+    |p_t(g)-\bar p_t^{(W)}(g)|
+    \le
+    \rho\left(d+\frac{W-1}{2}\right).
+    \label{eq:window-drift}
+\end{equation}
+Combining \eqref{eq:window-statistical} and \eqref{eq:window-drift} gives the
+current-time bound
+\begin{equation}
+\boxed{
+    \sup_{g\in\Q}
+    \left|
+        \widehat p_t^{(W)}(g)-p_t(g)
+    \right|
+    \le
+    \sqrt{
+        \frac{d}{2W}
+        \log\!\left(
+            \frac{dQ T_{\max}^2}{\delta}
+        \right)
+    }
+    +
+    \rho\left(d+\frac{W-1}{2}\right).
+}
+\label{eq:window-current-final}
+\end{equation}
+The first term is statistical uncertainty; the second is unavoidable tracking
+bias under the assumed drift model.  Set
+\[
+    L_{\max}
+    :=
+    \log\!\left(\frac{dQ T_{\max}^2}{\delta}\right).
+\]
+For the continuous relaxation in $W$, ignoring only the integer and feasibility
+constraints on the window length, the right-hand side is minimized at
+\[
+    W_{\star}
+    =
+    \left(
+        \frac{dL_{\max}}{2\rho^2}
+    \right)^{1/3}.
+\]
+At this value, the optimized bound is
+\[
+    \rho\left(d-\frac12\right)
+    +
+    \frac32
+    \left(
+        \frac{\rho dL_{\max}}{2}
+    \right)^{1/3}.
+\]
+Thus a simpler order statement with the logarithmic factor shown explicitly is
+\[
+    O\!\left(
+        \rho d
+        +
+        \left[
+            \rho d
+            \log\!\left(\frac{dQ T_{\max}^2}{\delta}\right)
+        \right]^{1/3}
+    \right).
+\]
+The additive $\rho d$ term is the irreducible staleness cost created by delayed
+revelation.
+
+
+\section{Adaptive aggregation over memory scales}
+\label{sec:adaptive-aggregation}
+
+The fixed-window bound above leaves a practical tuning question: which memory
+length $W$ should be used when the drift rate is unknown or changes over time?
+This section gives a rigorous aggregation construction.  The statistical and
+online-learning guarantees are deliberately separated:
+\begin{enumerate}[leftmargin=*]
+    \item a single simultaneous martingale event controls \emph{every} base
+    window and therefore any data-dependent convex combination of them; and
+    \item a fixed-share multiplicative update chooses the mixture weights and
+    enjoys interval-wise adaptive regret under delayed feedback.
+\end{enumerate}
+The weight update is the fixed-share update used in the MARA meta-algorithm of
+Gradu, Hazan, and Minasyan \cite{gradu2023}.  We use only their multiplicative
+aggregation mechanism and interval-regret argument; the control-specific
+random expert-switching and action-shift machinery in that paper are not
+needed here because a convex combination of CDF estimates is itself a valid
+CDF estimate.
+
+\subsection{A dictionary of window experts}
+
+Fix a finite dictionary of window lengths
+\[
+    1\le W_1<\cdots<W_J,
+\]
+and consider origins $k$ for which all $J$ windows are available, i.e.
+$k\ge d+W_J$.  Expert $j$ uses the $W_j$ most recent fully resolved origins,
+\begin{equation}
+    \mathcal W_{k,j}
+    :=
+    \{k-d-W_j+1,\ldots,k-d\},
+\end{equation}
+and outputs the empirical bivariate CDF
+\begin{equation}
+    \widehat p_{k,j}(g)
+    :=
+    \frac1{W_j}
+    \sum_{r\in\mathcal W_{k,j}} X_r(g),
+    \qquad g\in\Q.
+    \label{eq:base-window-expert}
+\end{equation}
+Its conditional-CDF target is
+\begin{equation}
+    \bar p_{k,j}(g)
+    :=
+    \frac1{W_j}
+    \sum_{r\in\mathcal W_{k,j}} p_r(g).
+    \label{eq:base-window-target}
+\end{equation}
+Both $\widehat p_{k,j}$ and any function of previously resolved losses are
+$\F_k$-measurable.  This predictability will be used below when the estimates
+are scored against the delayed observation generated at origin $k$.
+
+Let $\pi_k=(\pi_{k,1},\ldots,\pi_{k,J})$ be any random vector in the simplex
+$\Delta_J$ that is $\F_k$-measurable.  Define the convex aggregate
+\begin{align}
+    \widehat p_k^{\mathrm{mix}}(g)
+    &:=%
+    \sum_{j=1}^J \pi_{k,j}\widehat p_{k,j}(g),
+    \label{eq:mixture-cdf}
+    \\
+    \bar p_k^{\mathrm{mix}}(g)
+    &:=%
+    \sum_{j=1}^J \pi_{k,j}\bar p_{k,j}(g).
+    \label{eq:mixture-target}
+\end{align}
+Because each base estimate is coordinatewise nondecreasing in $g$, the mixture
+is also a bivariate CDF on the grid.
+
+The mixture can equivalently be written as a learned weighting of observation
+ages.  For $m=0,\ldots,W_J-1$, set
+\begin{equation}
+    \omega_{k,m}
+    :=
+    \sum_{j:W_j>m}
+    \frac{\pi_{k,j}}{W_j}.
+    \label{eq:induced-age-weights}
+\end{equation}
+Then $\omega_{k,m}\ge0$, $\sum_m\omega_{k,m}=1$, and
+\begin{equation}
+    \widehat p_k^{\mathrm{mix}}(g)
+    =
+    \sum_{m=0}^{W_J-1}
+    \omega_{k,m}X_{k-d-m}(g).
+    \label{eq:mixture-as-weighted-history}
+\end{equation}
+Moreover $\omega_{k,m+1}\le\omega_{k,m}$: mixing uniform windows induces a
+nonincreasing recency profile automatically.
+
+\begin{proposition}[Average age of the adaptive mixture]
+\label{prop:adaptive-average-age}
+The induced weights satisfy
+\begin{equation}
+    A_k
+    :=
+    \sum_{m=0}^{W_J-1}\omega_{k,m}(d+m)
+    =
+    \sum_{j=1}^J
+    \pi_{k,j}
+    \left(d+\frac{W_j-1}{2}\right).
+    \label{eq:adaptive-average-age}
+\end{equation}
+If the one-step CDF drift obeys
+\[
+    \sup_{g\in\Q}|p_{u+1}(g)-p_u(g)|\le\rho
+    \qquad\text{for every }u,
+\]
+then
+\begin{equation}
+    \sup_{g\in\Q}
+    |\bar p_k^{\mathrm{mix}}(g)-p_k(g)|
+    \le
+    \rho A_k.
+    \label{eq:adaptive-mixture-drift}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+Substituting \eqref{eq:induced-age-weights} and interchanging the finite sums,
+\begin{align*}
+    \sum_m\omega_{k,m}(d+m)
+    &=
+    \sum_{j=1}^J
+    \frac{\pi_{k,j}}{W_j}
+    \sum_{m=0}^{W_j-1}(d+m)
+    \\
+    &=
+    \sum_{j=1}^J
+    \pi_{k,j}
+    \left(d+\frac{W_j-1}{2}\right).
+\end{align*}
+For every $m$ and $g$, the bounded-drift assumption and the triangle inequality
+give
+\[
+    |p_k(g)-p_{k-d-m}(g)|
+    \le \rho(d+m).
+\]
+Using the weighted-history representation of the target and then averaging the
+last display with weights $\omega_{k,m}$ proves
+\eqref{eq:adaptive-mixture-drift}.
+\end{proof}
+
+\subsection{Post-selection-safe confidence bands}
+
+The interval-uniform event from Lemma~\ref{lem:interval} already controls every
+consecutive window in every residue stream.  Consequently, selecting or mixing
+window lengths after observing the past does not require another confidence
+split over the $J$ experts.
+
+Set
+\begin{equation}
+    L_{\max}
+    :=
+    \log\!\left(
+        \frac{dQ T_{\max}^2}{\delta}
+    \right),
+    \qquad
+    a_j
+    :=
+    \sqrt{\frac{dL_{\max}}{2W_j}}.
+    \label{eq:expert-stat-radius}
+\end{equation}
+
+\begin{theorem}[Adaptive convex aggregation on one simultaneous event]
+\label{thm:adaptive-mixture-band}
+On the event of Lemma~\ref{lem:interval}, simultaneously for every origin $k$
+for which all base windows are defined, every $g\in\Q$, and every
+$\F_k$-measurable mixture vector $\pi_k\in\Delta_J$,
+\begin{equation}
+    \left|
+        \widehat p_k^{\mathrm{mix}}(g)
+        -
+        \bar p_k^{\mathrm{mix}}(g)
+    \right|
+    \le
+    A_k^{\mathrm{stat}},
+    \qquad
+    A_k^{\mathrm{stat}}
+    :=
+    \sum_{j=1}^J\pi_{k,j}a_j.
+    \label{eq:adaptive-mixture-stat}
+\end{equation}
+Hence the statement holds with probability at least $1-\delta$ without an
+additional factor $J$ inside the confidence level.
+
+If, in addition, the bounded-drift condition with parameter $\rho$ holds, then
+on the same event
+\begin{equation}
+\boxed{
+    \sup_{g\in\Q}
+    \left|
+        \widehat p_k^{\mathrm{mix}}(g)-p_k(g)
+    \right|
+    \le
+    C_k^{\mathrm{mix}}
+    :=
+    \sum_{j=1}^J
+    \pi_{k,j}
+    \left[
+        \sqrt{\frac{dL_{\max}}{2W_j}}
+        +
+        \rho\left(d+\frac{W_j-1}{2}\right)
+    \right].
+}
+\label{eq:adaptive-mixture-current-band}
+\end{equation}
+Consequently,
+\begin{align}
+    \underline p_k^{\mathrm{mix}}(g)
+    &:=%
+    \left[\widehat p_k^{\mathrm{mix}}(g)-C_k^{\mathrm{mix}}\right]_+,
+    \\
+    \overline p_k^{\mathrm{mix}}(g)
+    &:=%
+    \left[\widehat p_k^{\mathrm{mix}}(g)+C_k^{\mathrm{mix}}\right]_1
+\end{align}
+form simultaneous lower and upper confidence surfaces on $\Q$.
+\end{theorem}
+
+\begin{proof}
+For every base window $j$, the argument leading to
+\eqref{eq:window-statistical} applies to that window on the single event of
+Lemma~\ref{lem:interval}; therefore
+\[
+    \sup_{g\in\Q}
+    |\widehat p_{k,j}(g)-\bar p_{k,j}(g)|
+    \le a_j
+\]
+simultaneously over all $k$ and $j$.  The event is already uniform over all
+consecutive intervals, so introducing a finite dictionary of such windows does
+not create a new union bound.
+
+For any realized $\pi_k\in\Delta_J$,
+\begin{align*}
+    \left|
+        \widehat p_k^{\mathrm{mix}}(g)
+        -
+        \bar p_k^{\mathrm{mix}}(g)
+    \right|
+    &\le
+    \sum_{j=1}^J
+    \pi_{k,j}
+    |\widehat p_{k,j}(g)-\bar p_{k,j}(g)|
+    \\
+    &\le
+    \sum_{j=1}^J\pi_{k,j}a_j.
+\end{align*}
+This argument is pathwise on the simultaneous event, which is why the weights
+may be data dependent.  Finally,
+\[
+    |\widehat p_k^{\mathrm{mix}}(g)-p_k(g)|
+    \le
+    |\widehat p_k^{\mathrm{mix}}(g)-\bar p_k^{\mathrm{mix}}(g)|
+    +
+    |\bar p_k^{\mathrm{mix}}(g)-p_k(g)|,
+\]
+and Proposition~\ref{prop:adaptive-average-age} bounds the second term by
+$\rho A_k$.  Substituting \eqref{eq:adaptive-average-age} proves
+\eqref{eq:adaptive-mixture-current-band}.
+\end{proof}
+
+\begin{remark}[What adaptivity costs in the confidence radius]
+The confidence event itself pays no extra $\log J$ factor because
+Lemma~\ref{lem:interval} is uniform over all admissible intervals before the
+weights are chosen.  The price of learning among $J$ memory scales appears
+instead in the adaptive-regret term below.  The radius
+$A_k^{\mathrm{stat}}=\sum_j\pi_{k,j}a_j$ can be conservative compared with a
+concentration inequality tailored to one deterministic weighted average, but
+it remains valid under arbitrary data-dependent post-selection of the mixture
+weights.
+\end{remark}
+
+\subsection{Fixed-share learning under delayed feedback}
+
+We next specify how to learn $\pi_k$.  For each origin $k$ and expert $j$, store
+the prediction \eqref{eq:base-window-expert} made at origin $k$.  When $B_k$ is
+revealed at physical time $k+d$, compute the integrated Brier loss
+\begin{equation}
+    \ell_{k,j}
+    :=
+    \frac1Q
+    \sum_{g\in\Q}
+    \left(
+        X_k(g)-\widehat p_{k,j}(g)
+    \right)^2
+    \in[0,1].
+    \label{eq:expert-brier-loss}
+\end{equation}
+For a mixture prediction, define analogously
+\begin{equation}
+    \ell_k^{\mathrm{mix}}
+    :=
+    \frac1Q
+    \sum_{g\in\Q}
+    \left(
+        X_k(g)-\widehat p_k^{\mathrm{mix}}(g)
+    \right)^2.
+    \label{eq:mixture-brier-loss}
+\end{equation}
+
+A single global expert learner would receive these losses with delay $d$.
+Instead, use the same residue decomposition that produced the martingale
+filtration.  For residue $c\in\{1,\ldots,d\}$, write its eligible origins as
+\[
+    k_{c,1}<k_{c,2}<\cdots,
+    \qquad
+    k_{c,i+1}=k_{c,i}+d.
+\]
+The outcome from $k_{c,i}$ is available at $k_{c,i}+d=k_{c,i+1}$, before the
+next prediction in that residue stream.  Thus each residue stream is a
+standard full-information expert problem in its own meta-time index.
+
+Let
+\[
+    n_{\max}:=\left\lceil\frac{T_{\max}}{d}\right\rceil,
+    \qquad
+    \sigma:=\frac1{n_{\max}},
+    \qquad
+    0<\eta\le\frac12,
+\]
+and assume $n_{\max}\ge2$.  For every residue, initialize $w_{c,1,j}=1$.
+At meta-round $i$, use
+\begin{equation}
+    \pi_{k_{c,i},j}
+    =
+    \frac{w_{c,i,j}}{\sum_{\ell=1}^J w_{c,i,\ell}},
+    \label{eq:fixed-share-probabilities}
+\end{equation}
+form the deterministic mixture \eqref{eq:mixture-cdf}, and, when the loss
+vector from that origin is revealed, update
+\begin{align}
+    \widetilde w_{c,i+1,j}
+    &:=%
+    w_{c,i,j}
+    \exp(-\eta\ell_{k_{c,i},j}),
+    \label{eq:fixed-share-multiplicative}
+    \\
+    w_{c,i+1,j}
+    &:=%
+    (1-\sigma)\widetilde w_{c,i+1,j}
+    +
+    \frac{\sigma}{J}
+    \sum_{\ell=1}^J
+    \widetilde w_{c,i+1,\ell}.
+    \label{eq:fixed-share-share}
+\end{align}
+This is the fixed-share multiplicative update used in Algorithm~2 of
+Gradu, Hazan, and Minasyan \cite{gradu2023}.  Their random expert-selection
+step is unnecessary here because we can output the convex mixture directly.
+
+\begin{theorem}[Residue-wise adaptive regret for the CDF mixture]
+\label{thm:residue-adaptive-regret}
+Fix a residue $c$ and any contiguous meta-time interval
+$I_c=[r,s]$.  Under updates
+\eqref{eq:fixed-share-multiplicative}--\eqref{eq:fixed-share-share},
+\begin{equation}
+\boxed{
+    (1-\eta)
+    \sum_{i=r}^s
+    \ell_{k_{c,i}}^{\mathrm{mix}}
+    \le
+    \min_{j\in[J]}
+    \sum_{i=r}^s
+    \ell_{k_{c,i},j}
+    +
+    \frac{\log(n_{\max}J)+2}{\eta}.
+}
+\label{eq:residue-adaptive-regret}
+\end{equation}
+Thus the learned mixture competes, on every local interval of a residue
+stream, with the best fixed memory scale on that interval.
+\end{theorem}
+
+\begin{proof}
+This is a direct specialization of the fixed-share potential argument in
+Lemma~A.2 of Gradu, Hazan, and Minasyan \cite{gradu2023}; we reproduce the
+steps to make the constants and the mapping to the CDF problem explicit.
+
+Suppress the residue index and write
+$W_i:=\sum_j w_{i,j}$ and
+$\pi_{i,j}:=w_{i,j}/W_i$.  The sharing step preserves total weight, so
+\begin{equation}
+    \frac{W_{i+1}}{W_i}
+    =
+    \sum_{j=1}^J
+    \pi_{i,j}e^{-\eta\ell_{i,j}}.
+    \label{eq:weight-potential-ratio}
+\end{equation}
+Because $0\le\ell_{i,j}\le1$ and $0<\eta\le1/2$,
+$e^{-x}\le 1-x+x^2$ for $x\in[0,1]$, and
+$\ell_{i,j}^2\le\ell_{i,j}$.  Hence, with
+$m_i:=\sum_j\pi_{i,j}\ell_{i,j}$,
+\begin{align*}
+    \frac{W_{i+1}}{W_i}
+    &\le
+    1-\eta m_i+\eta^2m_i
+    \\
+    &\le
+    \exp\{-\eta(1-\eta)m_i\}.
+\end{align*}
+Multiplying over $i=r,\ldots,s$ gives
+\begin{equation}
+    \log\frac{W_{s+1}}{W_r}
+    \le
+    -\eta(1-\eta)
+    \sum_{i=r}^s m_i.
+    \label{eq:potential-upper}
+\end{equation}
+
+For any fixed expert $j$, the sharing update implies
+\[
+    w_{i+1,j}
+    \ge
+    (1-\sigma)w_{i,j}e^{-\eta\ell_{i,j}}.
+\]
+Iterating over $I_c$ and using $W_{s+1}\ge w_{s+1,j}$ yields
+\begin{equation}
+    \log\frac{W_{s+1}}{W_r}
+    \ge
+    \log\pi_{r,j}
+    +|I_c|\log(1-\sigma)
+    -\eta\sum_{i=r}^s\ell_{i,j}.
+    \label{eq:potential-lower}
+\end{equation}
+After every share step, $\pi_{i,j}\ge\sigma/J$, while the initialization is
+uniform, so $\pi_{r,j}\ge\sigma/J$.  With
+$\sigma=1/n_{\max}$, $|I_c|\le n_{\max}$, and
+$\log(1-\sigma)\ge-2\sigma$ for $\sigma\le1/2$, the right-hand side of
+\eqref{eq:potential-lower} is at least
+\[
+    -\log(n_{\max}J)-2
+    -\eta\sum_{i=r}^s\ell_{i,j}.
+\]
+Combining with \eqref{eq:potential-upper}, dividing by $\eta$, and minimizing
+over $j$ gives
+\begin{equation}
+    (1-\eta)
+    \sum_{i=r}^s m_i
+    \le
+    \min_j\sum_{i=r}^s\ell_{i,j}
+    +
+    \frac{\log(n_{\max}J)+2}{\eta}.
+    \label{eq:weighted-expert-adreg}
+\end{equation}
+Finally, squared loss is convex in the prediction.  Therefore Jensen's
+inequality gives, at every origin,
+\[
+    \ell_{k_{c,i}}^{\mathrm{mix}}
+    \le
+    \sum_j\pi_{i,j}\ell_{i,j}
+    =m_i.
+\]
+Substitution into \eqref{eq:weighted-expert-adreg} proves the theorem.
+\end{proof}
+
+\begin{corollary}[Adaptive regret on a physical-time interval]
+\label{cor:physical-adaptive-regret}
+Let $I=[r,s]$ be any physical-time interval after the common burn-in and let
+$d_I$ denote the number of residue classes represented in $I$; hence
+$d_I\le\min\{d,|I|\}$.  Then
+\begin{equation}
+\boxed{
+    (1-\eta)
+    \sum_{k\in I}
+    \ell_k^{\mathrm{mix}}
+    \le
+    \min_{j\in[J]}
+    \sum_{k\in I}
+    \ell_{k,j}
+    +
+    \frac{d_I\,[\log(n_{\max}J)+2]}{\eta}.
+}
+\label{eq:physical-adaptive-regret}
+\end{equation}
+\end{corollary}
+
+\begin{proof}
+The intersection of a physical interval with any residue class is a contiguous
+meta-time interval.  Apply Theorem~\ref{thm:residue-adaptive-regret} to every
+nonempty residue intersection and sum.  This gives the sum, over residues, of
+their individual best-expert losses plus $d_I$ copies of the complexity term.
+For every common expert $j$, the sum of the residue-wise minima is no larger
+than that expert's loss over all of $I$; minimizing over the common $j$ gives
+\eqref{eq:physical-adaptive-regret}.
+\end{proof}
+
+\subsection{From Brier adaptive regret to CDF estimation error}
+
+The Brier loss has a direct statistical interpretation in this problem.  For
+any $\F_k$-measurable CDF prediction $q:\Q\to[0,1]$, define its grid-averaged
+squared estimation error
+\begin{equation}
+    \mathcal R_k(q)
+    :=
+    \frac1Q
+    \sum_{g\in\Q}
+    (q(g)-p_k(g))^2.
+    \label{eq:grid-mse-risk}
+\end{equation}
+Also define the irreducible Bernoulli variance term
+\begin{equation}
+    \nu_k
+    :=
+    \frac1Q
+    \sum_{g\in\Q}
+    p_k(g)(1-p_k(g))
+    \le\frac14.
+    \label{eq:brier-noise}
+\end{equation}
+
+\begin{remark}[Interpretation as excess risk relative to the true CDF]
+\label{rem:truth-oracle-risk}
+The risk
+\[
+    \mathcal R_k(q)
+    =
+    \frac1Q
+    \sum_{g\in\Q}
+    \bigl(q(g)-p_k(g)\bigr)^2
+\]
+has a natural clairvoyant benchmark.  An oracle that knows the current
+conditional CDF $p_k$ exactly would choose $q=p_k$ and incur zero risk:
+\[
+    \mathcal R_k(p_k)=0.
+\]
+Consequently,
+\[
+    \sum_{k\in I}
+    \E\!\left[
+        \mathcal R_k(\widehat p_k^{\mathrm{mix}})
+    \right]
+\]
+is the cumulative expected excess CDF-estimation risk relative to a
+clairvoyant oracle that knows $p_k$ at every origin.
+
+The oracle inequalities developed below therefore admit two complementary
+interpretations.  First, the adaptive mixture competes with the best fixed
+memory scale in the chosen window dictionary.  Second, after bounding the
+risk of that best window, the resulting bound directly controls the
+aggregate's absolute gap to the zero-risk truth oracle.  In this decomposition,
+the best-window term captures the intrinsic statistical and tracking
+difficulty of estimating the time-varying CDF, while the remaining
+meta-learning terms quantify the additional price of adaptively learning an
+appropriate memory scale.
+\end{remark}
+
+\begin{lemma}[Conditional Brier decomposition]
+\label{lem:brier-decomposition}
+For every $\F_k$-measurable prediction $q$,
+\begin{equation}
+    \E\!\left[
+        \frac1Q\sum_{g\in\Q}(X_k(g)-q(g))^2
+        \;\middle|\;\F_k
+    \right]
+    =
+    \nu_k+\mathcal R_k(q).
+    \label{eq:brier-decomposition}
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+For a fixed $g$, $X_k(g)\in\{0,1\}$ and
+$\E[X_k(g)\mid\F_k]=p_k(g)$.  Expanding around the conditional mean,
+\begin{align*}
+    \E[(X_k(g)-q(g))^2\mid\F_k]
+    &=
+    \operatorname{Var}(X_k(g)\mid\F_k)
+    +(p_k(g)-q(g))^2
+    \\
+    &=
+    p_k(g)(1-p_k(g))+(p_k(g)-q(g))^2.
+\end{align*}
+Average over $g\in\Q$.
+\end{proof}
+
+\begin{theorem}[Local oracle inequality for adaptive CDF estimation]
+\label{thm:adaptive-cdf-oracle}
+For every physical interval $I=[r,s]$ after burn-in, the residue-wise
+fixed-share aggregate satisfies
+\begin{equation}
+\boxed{
+    \sum_{k\in I}
+    \E\!\left[
+        \mathcal R_k(\widehat p_k^{\mathrm{mix}})
+    \right]
+    \le
+    \frac1{1-\eta}
+    \left
+    \{
+        \min_{j\in[J]}
+        \sum_{k\in I}
+        \E\!\left[
+            \mathcal R_k(\widehat p_{k,j})
+        \right]
+        +
+        \frac{d_I\,[\log(n_{\max}J)+2]}{\eta}
+        +
+        \frac{\eta|I|}{4}
+    \right\}.
+}
+\label{eq:adaptive-cdf-oracle}
+\end{equation}
+Thus, on every local interval, the aggregate tracks the best memory scale in
+expected grid-averaged squared CDF error, up to an explicit adaptive-regret
+penalty.  No drift parameter $\rho$ is required to run the weighting scheme.
+\end{theorem}
+
+\begin{proof}
+Corollary~\ref{cor:physical-adaptive-regret} is a pathwise inequality in the
+realized Brier losses.  Take expectations of both sides.  Since
+$\E[\min_j Y_j]\le\min_j\E[Y_j]$,
+\begin{align*}
+    (1-\eta)
+    \sum_{k\in I}\E[\ell_k^{\mathrm{mix}}]
+    &\le
+    \min_j
+    \sum_{k\in I}\E[\ell_{k,j}]
+    +
+    \frac{d_I[\log(n_{\max}J)+2]}{\eta}.
+\end{align*}
+Every base prediction and the mixture prediction are $\F_k$-measurable by
+construction.  Applying Lemma~\ref{lem:brier-decomposition} to each term gives
+\begin{align*}
+    (1-\eta)
+    \sum_{k\in I}
+    \E[\nu_k+\mathcal R_k(\widehat p_k^{\mathrm{mix}})]
+    &\le
+    \sum_{k\in I}\E[\nu_k]
+    +
+    \min_j
+    \sum_{k\in I}
+    \E[\mathcal R_k(\widehat p_{k,j})]
+    +
+    \frac{d_I[\log(n_{\max}J)+2]}{\eta}.
+\end{align*}
+Move the common variance contribution on the left to the right.  The remainder
+is $\eta\sum_{k\in I}\E[\nu_k]\le\eta|I|/4$ by
+\eqref{eq:brier-noise}.  Dividing by $1-\eta$ proves
+\eqref{eq:adaptive-cdf-oracle}.
+\end{proof}
+
+
+\subsection{Variation-budget view of nonstationarity}
+\label{subsec:variation-budget}
+
+The pointwise drift envelope $v_u\le\rho$ is convenient for a certified
+current-CDF band, but it can be unnecessarily restrictive for regret analysis:
+it rules out a rare large jump even when the process is otherwise stable.  A
+more flexible description is the cumulative path variation
+\begin{equation}
+    v_u
+    :=
+    \sup_{g\in\Q}|p_{u+1}(g)-p_u(g)|,
+    \qquad
+    V_{a:b}
+    :=
+    \sum_{u=a}^{b-1} v_u,
+    \quad a<b,
+    \label{eq:path-variation}
+\end{equation}
+with $V_{a:b}:=0$ when $b\le a$.  This is a lower-orthant CDF variation
+budget, not total variation distance between the full laws.  The use of a
+cumulative variation budget to quantify nonstationarity is standard in online
+and stochastic optimization; see, for example, Besbes, Gur, and Zeevi
+\cite{besbes2015}.  Their variation metric and optimization problem are
+different from ours, so none of their minimax regret rates are invoked below.
+Here the variation budget is used only to control the tracking error of a
+delayed CDF estimator.
+
+The bounded-drift model is the special case
+\[
+    V_{a:b}\le \rho(b-a).
+\]
+The cumulative formulation also permits abrupt changes followed by long stable
+periods.
+
+\begin{proposition}[Tracking error under an arbitrary variation path]
+\label{prop:mixture-variation-path}
+For the adaptive mixture in \eqref{eq:mixture-as-weighted-history}, define
+\[
+    B_k^{\mathrm{mix}}
+    :=
+    \sup_{g\in\Q}
+    |\bar p_k^{\mathrm{mix}}(g)-p_k(g)|.
+\]
+Then, pathwise,
+\begin{equation}
+\boxed{
+    B_k^{\mathrm{mix}}
+    \le
+    \sum_{m=0}^{W_J-1}
+    \omega_{k,m}
+    V_{k-d-m:k}.
+}
+\label{eq:mixture-variation-tracking}
+\end{equation}
+For a single window expert $j$,
+\begin{equation}
+    B_{k,j}
+    :=
+    \sup_{g\in\Q}
+    |\bar p_{k,j}(g)-p_k(g)|
+    \le
+    \frac1{W_j}
+    \sum_{m=0}^{W_j-1}
+    V_{k-d-m:k}.
+    \label{eq:window-variation-tracking}
+\end{equation}
+Consequently, if $v_u\le\rho$ for every $u$, then
+\eqref{eq:mixture-variation-tracking} reduces to
+$B_k^{\mathrm{mix}}\le\rho A_k$, recovering
+Proposition~\ref{prop:adaptive-average-age}.
+\end{proposition}
+
+\begin{proof}
+For every $m$ and $g$, repeated triangle inequality gives
+\[
+    |p_k(g)-p_{k-d-m}(g)|
+    \le
+    \sum_{u=k-d-m}^{k-1}
+    \sup_{h\in\Q}|p_{u+1}(h)-p_u(h)|
+    =
+    V_{k-d-m:k}.
+\]
+The target mixture has the same age weights as
+\eqref{eq:mixture-as-weighted-history}, namely
+$\bar p_k^{\mathrm{mix}}(g)=\sum_m\omega_{k,m}p_{k-d-m}(g)$.
+Taking the weighted average of the preceding inequality proves
+\eqref{eq:mixture-variation-tracking}.  Uniform weights
+$\omega_{k,m}=1/W_j$ for $m=0,\ldots,W_j-1$ give
+\eqref{eq:window-variation-tracking}.  Finally,
+$V_{k-d-m:k}\le\rho(d+m)$ under $v_u\le\rho$; averaging over $m$ gives
+$\rho A_k$ by \eqref{eq:adaptive-average-age}.
+\end{proof}
+
+The next lemma quantifies the stochastic part of a fixed-window estimator in
+mean square.  It uses only the staggered martingale-difference construction;
+no mixing assumption is needed.
+
+\begin{lemma}[Mean-square fluctuation of one window expert]
+\label{lem:window-mse-fluctuation}
+For every base window $j$ and eligible origin $k$,
+\begin{equation}
+    \E\!\left[
+        \frac1Q
+        \sum_{g\in\Q}
+        \left(
+            \widehat p_{k,j}(g)-\bar p_{k,j}(g)
+        \right)^2
+    \right]
+    \le
+    \frac{d}{4W_j}.
+    \label{eq:window-mse-fluctuation}
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+Fix $g\in\Q$ and partition the $W_j$ origins in
+$\mathcal W_{k,j}$ by their residue modulo $d$.  For residue $c$, let
+\[
+    S_c(g)
+    :=
+    \sum_{r\in\mathcal W_{k,j}:\,r\equiv c\!\!\pmod d}
+    \bigl(X_r(g)-p_r(g)\bigr).
+\]
+Then
+\[
+    \widehat p_{k,j}(g)-\bar p_{k,j}(g)
+    =
+    \frac1{W_j}\sum_{c=1}^d S_c(g).
+\]
+By Cauchy--Schwarz,
+$\left(\sum_c S_c\right)^2\le d\sum_c S_c^2$.  Within each residue stream,
+the summands are martingale differences with respect to the staggered
+filtration.  Distinct increments in the same stream are therefore orthogonal
+in $L^2$, and for a Bernoulli increment
+\[
+    \E[(X_r(g)-p_r(g))^2]
+    =
+    \E[p_r(g)(1-p_r(g))]
+    \le \frac14.
+\]
+If $n_c$ window observations lie in residue $c$, then
+$\E[S_c(g)^2]\le n_c/4$.  Since $\sum_c n_c=W_j$,
+\[
+    \E\!\left[
+        (\widehat p_{k,j}(g)-\bar p_{k,j}(g))^2
+    \right]
+    \le
+    \frac{d}{4W_j}.
+\]
+Averaging over $g\in\Q$ proves the lemma.
+\end{proof}
+
+\begin{lemma}[Cumulative tracking cost of a fixed window]
+\label{lem:cumulative-window-variation}
+Let $I=[r,s]$ be a physical-time interval after burn-in and set
+$n_I:=|I|$.  For expert $j$, define the enlarged-interval variation
+\begin{equation}
+    \mathcal V_{I,j}
+    :=
+    V_{r-d-W_j+1:s}
+    =
+    \sum_{u=r-d-W_j+1}^{s-1}v_u,
+    \label{eq:expanded-variation-budget}
+\end{equation}
+and its average age
+\[
+    A_j
+    :=
+    d+\frac{W_j-1}{2}.
+\]
+Then, pathwise,
+\begin{equation}
+\boxed{
+    \sum_{k\in I} B_{k,j}
+    \le
+    A_j\,\mathcal V_{I,j}.
+}
+\label{eq:cumulative-window-tracking}
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+By \eqref{eq:window-variation-tracking},
+\begin{align*}
+    \sum_{k=r}^s B_{k,j}
+    &\le
+    \frac1{W_j}
+    \sum_{m=0}^{W_j-1}
+    \sum_{k=r}^s
+    \sum_{u=k-d-m}^{k-1}v_u.
+\end{align*}
+Fix $m$.  A particular increment $v_u$ can appear in the inner sum only for
+$k\in\{u+1,\ldots,u+d+m\}$, hence at most $d+m$ times.  All such increments
+lie inside $[r-d-W_j+1,s-1]$.  Therefore
+\[
+    \sum_{k=r}^s
+    \sum_{u=k-d-m}^{k-1}v_u
+    \le
+    (d+m)\,\mathcal V_{I,j}.
+\]
+Averaging over $m=0,\ldots,W_j-1$ yields
+\[
+    \sum_{k\in I}B_{k,j}
+    \le
+    \left[
+        \frac1{W_j}\sum_{m=0}^{W_j-1}(d+m)
+    \right]
+    \mathcal V_{I,j}
+    =
+    A_j\mathcal V_{I,j}.
+\]
+\end{proof}
+
+\begin{theorem}[Variation-budget oracle bound for the adaptive estimator]
+\label{thm:variation-budget-oracle}
+Let $I=[r,s]$ be any physical interval after burn-in, with $n_I=|I|$.
+For each expert $j$, let $\mathcal V_{I,j}$ be defined by
+\eqref{eq:expanded-variation-budget}.  Then the residue-wise fixed-share
+aggregate satisfies
+\begin{equation}
+\boxed{
+\begin{aligned}
+    \sum_{k\in I}
+    \E\!\left[
+        \mathcal R_k(\widehat p_k^{\mathrm{mix}})
+    \right]
+    \le
+    \frac1{1-\eta}
+    \Bigg[
+        \min_{j\in[J]}
+        \left\{
+            \frac{n_I d}{2W_j}
+            +
+            2A_j\,\E[\mathcal V_{I,j}]
+        \right\}
+        +
+        \frac{d_I[\log(n_{\max}J)+2]}{\eta}
+        +
+        \frac{\eta n_I}{4}
+    \Bigg].
+\end{aligned}
+}
+\label{eq:variation-budget-oracle}
+\end{equation}
+If a deterministic pathwise budget
+$\mathcal V_{I,j}\le V_I$ holds for every candidate window, then
+$\E[\mathcal V_{I,j}]$ may be replaced by $V_I$.
+The meta-learner does not need to know $V_I$.
+\end{theorem}
+
+\begin{proof}
+For any $g$,
+\[
+    \widehat p_{k,j}(g)-p_k(g)
+    =
+    \bigl(\widehat p_{k,j}(g)-\bar p_{k,j}(g)\bigr)
+    +
+    \bigl(\bar p_{k,j}(g)-p_k(g)\bigr).
+\]
+Using $(x+y)^2\le2x^2+2y^2$, averaging over $g$, taking expectations, and
+applying Lemma~\ref{lem:window-mse-fluctuation} gives
+\begin{equation}
+    \E[\mathcal R_k(\widehat p_{k,j})]
+    \le
+    \frac{d}{2W_j}
+    +
+    2\E[B_{k,j}^2].
+    \label{eq:base-risk-prevariation}
+\end{equation}
+Because two CDF values differ by at most one, $0\le B_{k,j}\le1$, so
+$B_{k,j}^2\le B_{k,j}$.  Summing
+\eqref{eq:base-risk-prevariation} over $k\in I$ and using
+Lemma~\ref{lem:cumulative-window-variation} yields
+\begin{equation}
+    \sum_{k\in I}
+    \E[\mathcal R_k(\widehat p_{k,j})]
+    \le
+    \frac{n_I d}{2W_j}
+    +
+    2A_j\E[\mathcal V_{I,j}].
+    \label{eq:base-risk-variation}
+\end{equation}
+Substitute \eqref{eq:base-risk-variation} into the local oracle inequality
+\eqref{eq:adaptive-cdf-oracle}.  The latter rests on the residue-wise
+fixed-share adaptive-regret argument of Gradu, Hazan, and Minasyan
+\cite{gradu2023}, specialized and proved above.  This proves
+\eqref{eq:variation-budget-oracle}.  The deterministic-budget statement is
+immediate.
+\end{proof}
+
+\begin{corollary}[Rate suggested by a common variation budget]
+\label{cor:variation-budget-rate}
+Suppose $\mathcal V_{I,j}\le V_I$ for every candidate window and that the
+window dictionary contains a value within a constant factor of
+\[
+    W_I^*
+    :=
+    \sqrt{\frac{n_I d}{2V_I}},
+    \label{eq:variation-optimal-window}
+\]
+whenever $0<V_I<\infty$ and this value lies in the admissible window range.
+Then the best-window term in \eqref{eq:variation-budget-oracle} is, up to a
+universal constant from discretizing the window dictionary,
+\begin{equation}
+    O\!\left(
+        \sqrt{n_I d V_I}
+        +
+        dV_I
+    \right).
+    \label{eq:variation-rate}
+\end{equation}
+For a geometric dictionary $W_j=2^{j-1}$, the constant-factor coverage of
+$W_I^*$ is automatic away from the endpoints.  Thus the meta-learner adapts to
+the unknown variation scale through its competition with the best memory
+length; no value of $V_I$ or $\rho$ is required by the update itself.
+\end{corollary}
+
+\begin{proof}
+Under the common budget, the window-dependent part of
+\eqref{eq:variation-budget-oracle} is
+\[
+    \frac{n_I d}{2W}
+    +
+    2\left(d+\frac{W-1}{2}\right)V_I
+    =
+    \frac{n_I d}{2W}
+    +
+    WV_I
+    +(2d-1)V_I.
+\]
+Ignoring the additive term independent of $W$, the continuous minimizer of
+$\frac{n_Id}{2W}+WV_I$ is
+$W_I^*=\sqrt{n_Id/(2V_I)}$, and the two $W$-dependent terms sum to
+$\sqrt{2n_IdV_I}$.  Choosing a dictionary element within a constant factor of
+$W_I^*$ changes this quantity by only a universal constant.  Adding the
+$(2d-1)V_I$ term proves \eqref{eq:variation-rate}.
+\end{proof}
+
+\begin{remark}[When sublinear estimation error is possible]
+For fixed delay $d$, the variation-dependent contribution in
+\eqref{eq:variation-rate} is sublinear in $n_I$ whenever $V_I=o(n_I)$.
+This parallels the general role of sublinear variation budgets in
+nonstationary regret theory, but should not be read as an application of the
+minimax results of Besbes, Gur, and Zeevi \cite{besbes2015}: our target,
+feedback structure, loss, and variation metric are different.  If the
+variation budget is linear in the interval length, the bound permits linear
+cumulative estimation error, which is the expected qualitative behavior in a
+persistently changing environment.
+\end{remark}
+
+\begin{remark}[Interpretation of the two guarantees]
+Theorem~\ref{thm:adaptive-mixture-band} and
+Theorem~\ref{thm:adaptive-cdf-oracle} answer different questions.  The first is
+a high-probability $\ell_\infty(\Q)$ confidence statement and still requires a
+temporal regularity condition, such as a known $\rho$, if the target is the
+current CDF $p_k$.  The second is an adaptive prediction guarantee: the
+fixed-share weights need not know $\rho$ and compete locally with the best
+window expert in expected squared CDF error.  Thus one may use the same
+adaptive mixture either in a certified mode, when a valid drift envelope is
+available, or as a plug-in estimator whose tracking quality is controlled by
+adaptive regret.
+\end{remark}
+
+\begin{remark}[Choice of the memory dictionary]
+A convenient implementation uses geometric windows, for example
+$W_j=2^{j-1}$ up to the largest feasible window.  Then $J=O(\log T_{\max})$,
+so the expert-selection complexity enters the regret bound only through
+$\log J$.  Under the bounded-drift model, writing
+$L_{\max}=\log(dQ T_{\max}^2/\delta)$, the continuous-relaxation optimizer of
+the fixed-window confidence radius is
+$W_{\star}=(dL_{\max}/(2\rho^2))^{1/3}$ as derived above.  A geometric dictionary contains a
+window within a constant factor of that scale without requiring the algorithm
+to know $\rho$ in advance; Theorem~\ref{thm:adaptive-cdf-oracle} explains how
+the Brier-weighted aggregate can track whichever available scale predicts best
+on each local interval.
+\end{remark}
+
+\section{Simultaneous control of many edges}
+
+For applications with a set $\cE$ of pairwise processes, let edge $e$ have
+delay $d_e$ and query set $\Q_e$ of size $Q_e$.  Define the global complexity
+count
+\begin{equation}
+    C
+    :=
+    \sum_{e\in\cE} d_e Q_e.
+    \label{eq:global-C}
+\end{equation}
+The proof of Theorem~\ref{thm:single-edge-anytime} gives the following result
+without requiring independence across edges.
+
+\begin{corollary}[One global confidence event over edges]
+\label{cor:multi-edge}
+For
+\begin{equation}
+    r_n^{\mathrm{glob}}(\delta)
+    :=
+    \sqrt{
+        \frac1{2n}
+        \log\!\left(
+            \frac{\pi^2 C n^2}{3\delta}
+        \right)
+    },
+    \label{eq:global-rn}
+\end{equation}
+with probability at least $1-\delta$, the residue-level bounds hold
+simultaneously for every edge $e$, every one of its $d_e$ residues, every query
+$g\in\Q_e$, and every sample size $n\ge1$.
+
+Consequently, if $N_{t,e}$ edge-$e$ observations have resolved by time $t$,
+then
+\begin{equation}
+\boxed{
+    \sup_{g\in\Q_e}
+    \left|
+        \widehat p_{t,e}(g)-\bar p_{t,e}(g)
+    \right|
+    \le
+    \sqrt{
+        \frac{d_e}{2N_{t,e}}
+        \log\!\left(
+            \frac{\pi^2 C N_{t,e}^2}{3\delta}
+        \right)
+    }
+}
+\label{eq:multi-edge-rate}
+\end{equation}
+simultaneously over all edges and times.
+\end{corollary}
+
+This form uses one global confidence level $\delta$.  The multiplicity over
+edges, delays, and bivariate grid points enters only through the logarithm of
+$C$.
+
+\section{Implementation}
+
+The theorem is compatible with a simple streaming implementation.
+For each edge $e$:
+\begin{enumerate}[leftmargin=*]
+    \item maintain an $M\times M$ histogram of resolved pairs $B_k$;
+    \item increment one histogram cell whenever a new pair resolves;
+    \item obtain the empirical bivariate CDF on the grid by a two-dimensional
+    cumulative sum;
+    \item maintain only the residue sample counts $n_{t,e,c}$, not separate
+    histograms for each residue;
+    \item compute the exact statistical width
+    \[
+        E_{t,e}
+        =
+        \sum_c
+        \frac{n_{t,e,c}}{N_{t,e}}
+        r_{n_{t,e,c}}^{\mathrm{glob}}(\delta),
+    \]
+    or the simpler upper bound in \eqref{eq:multi-edge-rate};
+    \item return either the plug-in surface $\widehat p_{t,e}$ or the one-sided
+    lower surface
+    \[
+        \underline p_{t,e}(g)
+        =
+        [\widehat p_{t,e}(g)-E_{t,e}]_+.
+    \]
+\end{enumerate}
+
+Because every resolved bivariate observation determines all lower-orthant
+indicators simultaneously, a single pair updates the entire empirical CDF.
+The grid size affects storage and numerical resolution, while its statistical
+cost is only logarithmic through $Q=M^2$.
+
+With a dense graph of pairwise processes, storage is
+$O(|\cE|M^2)$ for the histograms plus $O(\sum_e d_e)$ residue counts.  Both the
+histogram updates and cumulative sums are amenable to batched tensor/GPU
+implementations.
+
+\section{Why the finite grid is theoretically useful}
+
+In the i.i.d. setting, bivariate empirical CDFs admit continuum-uniform
+Glivenko--Cantelli/DKW-type theory.  Under arbitrary adapted dependence, the
+correct complexity notion changes.  Rakhlin et al. show that sequential
+uniform convergence is characterized by sequential complexity measures, and
+explicitly note that even the ordinary one-dimensional threshold class can
+fail unrestricted sequential uniform convergence \cite{rakhlin2015}.
+
+This creates a genuine obstacle to a completely distribution-free statement
+of the form
+\[
+    \sup_{a,b\in\R}
+    \left|
+        \widehat p_t(a,b)-\bar p_t(a,b)
+    \right|
+    \le \epsilon_t
+\]
+under arbitrary adaptation.  Since bivariate lower orthants contain
+one-dimensional threshold subclasses, a continuum extension needs additional
+structure or a more specialized argument.
+
+The finite grid removes this ambiguity: it creates a finite function class for
+which the martingale concentration argument is immediate and fully explicit.
+For online allocation applications this is often sufficient because the same
+grid is already used numerically.  A continuum extension under restricted
+adversaries, mixing, stability, or instance-dependent sequential complexity is
+a separate theoretical direction.
+
+\section{Discussion and open questions}
+
+The note establishes a conservative but transparent delayed bivariate
+martingale CDF theory.  Several improvements are possible.
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Sharper treatment of delay.}
+    The $\sqrt{d/t}$ rate is produced by the staggered proof.  A specialized
+    delayed-martingale argument may combine all origins more efficiently and
+    reduce the delay penalty.  The present theorem should therefore be viewed
+    as a rigorous baseline, not a minimax statement.
+
+    \item \textbf{Continuum-uniform lower orthants.}
+    It is worth identifying assumptions under which the bivariate lower-orthant
+    class has tractable sequential complexity.  Such a result could remove the
+    explicit grid from the theorem.
+
+    \item \textbf{Time-uniform moving windows.}
+    The moving-window result above is uniform over windows only up to a fixed
+    terminal horizon $T_{\max}$.  Confidence-sequence stitching could replace
+    this with a fully anytime windowed result.
+
+    \item \textbf{Data-dependent widths.}
+    Empirical-Bernstein or variance-adaptive martingale bounds may be much
+    tighter when joint failures are rare, as is typical in low-miscoverage
+    applications.
+
+    \item \textbf{Sharper adaptive aggregation.}
+    Section~\ref{sec:adaptive-aggregation} uses residue-wise fixed-share
+    aggregation because it converts the physical delay into ordinary
+    full-information meta-rounds.  A delayed-experts analysis that shares one
+    global weight vector across residues could potentially reduce the explicit
+    $d$ factor in the adaptive-regret term.
+
+    \item \textbf{Plug-in versus certified use.}
+    In applications with a separate outer calibration controller, the empirical
+    CDF may be used directly for efficiency while the lower confidence surface
+    is retained as an optional conservative mode.  The same bound quantifies
+    the estimation error in either case.
+\end{enumerate}
+
+\section{Summary}
+
+For delayed bivariate online observations, the key construction is
+\[
+    \text{delay staggering}
+    \;\Longrightarrow\;
+    \text{martingale-difference streams}
+    \;\Longrightarrow\;
+    \text{uniform finite-grid CDF bound}.
+\]
+The main edge-level result is
+\[
+    \sup_{g\in\Q}
+    |\widehat p_t(g)-\bar p_t(g)|
+    \le
+    \sqrt{
+        \frac{d}{2N_t}
+        \log\!\left(
+            \frac{\pi^2 dQ N_t^2}{3\delta}
+        \right)
+    }
+\]
+with one global confidence event.  When $N_t\asymp t$, this is
+\[
+    O\!\left(
+        \sqrt{
+            \frac{d}{t}
+            \log\!\left(\frac{dQt^2}{\delta}\right)
+        }
+    \right).
+\]  Under a stable conditional CDF, this is a
+confidence band for the common bivariate CDF.  Under drift, the same statistical
+term combines with an explicit tracking-bias term.  A dictionary of moving-window
+CDF estimators can additionally be combined with data-dependent fixed-share
+weights: the simultaneous confidence event survives post-selection, while the
+residue-wise meta-learner competes on every interval with the best memory scale
+in Brier loss and in expected grid-averaged squared CDF error.  Under a cumulative
+lower-orthant variation budget $V_I$, this yields a best-window contribution of
+order $\sqrt{|I|dV_I}+dV_I$ up to constants and the separate meta-regret term.
+The construction requires no i.i.d. assumption and treats delay as a filtration problem rather
+than as an independence assumption.
+
+\section{Summary of regret guarantees and assumptions}
+\label{sec:regret-summary}
+
+This section collects the regret guarantees in one place and separates the
+assumptions required for the basic adaptive-regret statement from those needed
+only for the variation-budget rate.
+
+Let $I=[r,s]$ be a physical-time interval after burn-in,
+$n_I:=|I|$, and let $d_I$ denote the number of residue classes represented in
+$I$.  Recall the current-CDF estimation risk
+\[
+    \mathcal R_k(q)
+    :=
+    \frac1Q
+    \sum_{g\in\Q}
+    \bigl(q(g)-p_k(g)\bigr)^2.
+\]
+Since $\mathcal R_k(p_k)=0$, the quantity
+\[
+    \sum_{k\in I}
+    \E\!\left[
+        \mathcal R_k(\widehat p_k^{\mathrm{mix}})
+    \right]
+\]
+is also the cumulative expected excess CDF-estimation risk relative to a
+clairvoyant oracle that knows the current conditional CDF $p_k$ at every
+origin.
+
+\paragraph{1. Pathwise adaptive regret in Brier loss.}
+For the residue-wise fixed-share mixture,
+\[
+\boxed{
+    (1-\eta)
+    \sum_{k\in I}
+    \ell_k^{\mathrm{mix}}
+    \le
+    \min_{j\in[J]}
+    \sum_{k\in I}
+    \ell_{k,j}
+    +
+    \frac{
+        d_I[\log(n_{\max}J)+2]
+    }{\eta}.
+}
+\]
+Thus, on every physical-time interval, the adaptive mixture competes with the
+best fixed memory scale in the dictionary on that interval.  This is an
+adaptive-regret guarantee in the sense of local comparison on arbitrary
+contiguous intervals; such interval-wise regret criteria are standard in
+adaptive online learning
+\cite{herbster1998,hazan2009,gradu2023}.
+
+\paragraph{2. Oracle inequality for current-CDF estimation.}
+Using the conditional Brier decomposition gives
+\[
+\boxed{
+    \sum_{k\in I}
+    \E\!\left[
+        \mathcal R_k(\widehat p_k^{\mathrm{mix}})
+    \right]
+    \le
+    \frac1{1-\eta}
+    \left[
+        \min_{j\in[J]}
+        \sum_{k\in I}
+        \E\!\left[
+            \mathcal R_k(\widehat p_{k,j})
+        \right]
+        +
+        \frac{
+            d_I[\log(n_{\max}J)+2]
+        }{\eta}
+        +
+        \frac{\eta n_I}{4}
+    \right].
+}
+\]
+The left-hand side measures distance to the zero-risk truth oracle $p_k$.
+The first term on the right is the estimation error of the best available
+window in hindsight, while the remaining terms are the additional cost of
+adaptively learning the appropriate memory scale.
+
+\paragraph{3. Variation-budget bound.}
+Let
+\[
+    v_u
+    :=
+    \sup_{g\in\Q}
+    |p_{u+1}(g)-p_u(g)|
+\]
+and
+\[
+    \mathcal V_{I,j}
+    :=
+    V_{r-d-W_j+1:s}.
+\]
+With
+\[
+    A_j
+    :=
+    d+\frac{W_j-1}{2},
+\]
+the adaptive estimator satisfies
+\[
+\boxed{
+\begin{aligned}
+    \sum_{k\in I}
+    \E\!\left[
+        \mathcal R_k(\widehat p_k^{\mathrm{mix}})
+    \right]
+    \le
+    \frac1{1-\eta}
+    \Bigg[
+        \min_{j\in[J]}
+        \left\{
+            \frac{n_I d}{2W_j}
+            +
+            2A_j\E[\mathcal V_{I,j}]
+        \right\}
+        +
+        \frac{
+            d_I[\log(n_{\max}J)+2]
+        }{\eta}
+        +
+        \frac{\eta n_I}{4}
+    \Bigg].
+\end{aligned}
+}
+\]
+The term $n_Id/(2W_j)$ is the statistical fluctuation cost of window $j$,
+while $2A_j\E[\mathcal V_{I,j}]$ is its tracking cost under temporal
+nonstationarity.
+
+If a common pathwise budget
+\[
+    \mathcal V_{I,j}\le V_I
+    \qquad
+    \text{for all }j
+\]
+is available, the window-dependent part is
+\[
+    \frac{n_Id}{2W_j}
+    +
+    2
+    \left(
+        d+\frac{W_j-1}{2}
+    \right)V_I.
+\]
+Its continuous optimal scale is
+\[
+    W_I^\star
+    =
+    \sqrt{\frac{n_Id}{2V_I}},
+\]
+and a dictionary containing a window within a constant factor of
+$W_I^\star$ yields
+\[
+\boxed{
+    O\!\left(
+        \sqrt{n_IdV_I}
+        +
+        dV_I
+    \right)
+}
+\]
+for the best-window contribution, in addition to the fixed-share
+meta-regret terms.  Variation budgets are a standard way of describing
+nonstationarity, although the lower-orthant CDF variation used here differs
+from the cost-function variation studied, for example, by
+Besbes, Gur, and Zeevi \cite{besbes2015}.
+
+\subsection*{Assumptions used by the regret analysis}
+
+\begin{enumerate}[leftmargin=*]
+
+    \item \textbf{Adapted observations and conditional-CDF target.}
+    For every query $g\in\Q$,
+    \[
+        p_k(g)
+        =
+        \E[X_k(g)\mid\F_k].
+    \]
+    The process may otherwise depend arbitrarily on the past.  No i.i.d.,
+    mixing, or independence-across-time assumption is imposed.
+    Martingale formulations based on conditional distributions under adapted
+    dependence are also used in
+    \cite{rakhlin2015,yin2022,mineiro2023}.
+
+    \item \textbf{Deterministic bounded reveal delay.}
+    Each observation used by the edge is completely revealed after delay $d$.
+    The residue construction converts this delayed problem into $d$
+    ordinary full-information expert streams.  Online learning with delayed
+    feedback and reductions from delayed to non-delayed learning are studied
+    more generally by Joulani, Gyorgy, and Szepesvari
+    \cite{joulani2013}.
+    For a pairwise edge $e=(h_1,h_2)$ in the trajectory application, the
+    natural choice is
+    \[
+        d_e=\max\{d_{h_1},d_{h_2}\}.
+    \]
+
+    \item \textbf{Finite query grid.}
+    The regret loss is evaluated on a finite set
+    $\Q$ of size $Q$:
+    \[
+        \ell_{k,j}
+        =
+        \frac1Q
+        \sum_{g\in\Q}
+        (X_k(g)-\widehat p_{k,j}(g))^2.
+    \]
+    This is both the computational representation of the bivariate CDF and a
+    way of avoiding additional sequential-complexity assumptions required for
+    unrestricted continuum-uniform empirical-process results under arbitrary
+    dependence; see \cite{rakhlin2015}.  The regret results therefore make no
+    claim about a continuum of thresholds outside $\Q$.
+
+    \item \textbf{Finite dictionary of memory scales.}
+    The learner competes with a finite collection
+    \[
+        1\le W_1<\cdots<W_J.
+    \]
+    Finite expert classes and multiplicative-weight aggregation are standard
+    in prediction with expert advice \cite{cesabianchi2006}.  The
+    fixed-share construction used to track locally best experts originates
+    with Herbster and Warmuth \cite{herbster1998}; our particular
+    interval-regret argument follows the fixed-share construction used by
+    Gradu, Hazan, and Minasyan \cite{gradu2023}.
+
+    \item \textbf{Predictable mixture weights.}
+    The mixture vector $\pi_k$ is $\F_k$-measurable: it may depend on all
+    information available before the outcome generated at origin $k$ is
+    revealed, but not on that unrevealed outcome.  This is the standard
+    non-anticipation condition in online prediction with expert advice
+    \cite{cesabianchi2006}.
+
+    \item \textbf{Bounded Brier loss.}
+    Every base prediction and mixture prediction takes values in $[0,1]$,
+    giving
+    \[
+        0\le \ell_{k,j}\le1.
+    \]
+    This boundedness is used in the multiplicative-weight potential argument.
+    The Brier score is a classical proper scoring rule for probabilistic
+    predictions; see Gneiting and Raftery \cite{gneiting2007}.
+    Its conditional decomposition is especially convenient here because the
+    excess expected Brier loss relative to the true conditional probability is
+    exactly squared estimation error.
+
+    \item \textbf{Fixed-share tuning and finite meta-horizon.}
+    The displayed constants use
+    \[
+        n_{\max}
+        =
+        \left\lceil
+            \frac{T_{\max}}{d}
+        \right\rceil,
+        \qquad
+        \sigma=\frac1{n_{\max}},
+        \qquad
+        0<\eta\le\frac12.
+    \]
+    These are algorithmic tuning conditions rather than distributional
+    assumptions.  Fixed-share and related expert-tracking methods use
+    analogous sharing parameters
+    \cite{herbster1998,gradu2023}.
+
+    \item \textbf{Variation is required only for the explicit
+    truth-oracle rate.}
+    The fixed-share adaptive-regret and local oracle inequalities do
+    \emph{not} assume a drift bound, $\rho$, or a variation budget.
+    The quantities $\mathcal V_{I,j}$ and $V_I$ enter only when converting
+    the best-window risk into an explicit rate relative to the current true
+    CDF.  Variation-budget models for nonstationary environments are standard
+    in the nonstationary optimization literature
+    \cite{besbes2015}; the variation metric used in this note is specific to
+    lower-orthant conditional CDFs.
+
+    \item \textbf{Near-oracle dictionary coverage is required only for the
+    simplified rate.}
+    The theorem itself holds for any finite dictionary
+    $\{W_1,\ldots,W_J\}$.  The rate
+    \[
+        O\!\left(
+            \sqrt{n_IdV_I}+dV_I
+        \right)
+    \]
+    additionally assumes that the dictionary contains a memory length within
+    a constant factor of $W_I^\star$.  A geometric dictionary
+    $W_j=2^{j-1}$ provides this coverage away from the admissible endpoints.
+    This is a design choice, not an assumption on the data-generating process.
+
+    \item \textbf{Burn-in.}
+    The regret statements are written after the largest required base window
+    is available.  This is a bookkeeping condition ensuring that every expert
+    in the dictionary is defined, rather than a stochastic assumption.
+
+\end{enumerate}
+
+\paragraph{What is not assumed.}
+In particular, the regret analysis does not require independence, stationarity,
+mixing, a known drift rate $\rho$, a known variation budget $V_I$, or a
+confidence level $\delta$.  The parameter $\delta$ belongs to the separate
+high-probability concentration analysis; it does not enter the fixed-share
+regret or variation-budget oracle inequalities.
+
+
+\begin{thebibliography}{99}
+
+\bibitem{rakhlin2015}
+A. Rakhlin, K. Sridharan, and A. Tewari.
+\newblock Sequential complexities and uniform martingale laws of large numbers.
+\newblock \emph{Probability Theory and Related Fields},
+161:111--153, 2015.
+\newblock
+\href{https://www.mit.edu/~rakhlin/papers/emp_proc_dep_revised.pdf}
+{Preprint}.
+
+\bibitem{yin2022}
+S. Yin, S. Agrawal, and A. Zeevi.
+\newblock Online allocation and learning in the presence of strategic agents.
+\newblock \emph{Advances in Neural Information Processing Systems 35}, 2022.
+\newblock
+\href{https://papers.neurips.cc/paper_files/paper/2022/file/29455889cb812d661573f6fbc800bd9e-Paper-Conference.pdf}
+{Paper}.
+
+\bibitem{mineiro2023}
+P. Mineiro and S. Howard.
+\newblock Time-uniform confidence bands for the CDF under nonstationarity.
+\newblock \emph{Advances in Neural Information Processing Systems 36}, 2023.
+\newblock
+\href{https://proceedings.neurips.cc/paper_files/paper/2023/hash/148bbc25b934211d80435b5cad5a7198-Abstract-Conference.html}
+{Paper}.
+
+\bibitem{cesabianchi2006}
+N. Cesa-Bianchi and G. Lugosi.
+\newblock \emph{Prediction, Learning, and Games}.
+\newblock Cambridge University Press, 2006.
+\newblock
+\href{https://doi.org/10.1017/CBO9780511546921}
+{Book}.
+
+\bibitem{herbster1998}
+M. Herbster and M. K. Warmuth.
+\newblock Tracking the best expert.
+\newblock \emph{Machine Learning}, 32(2):151--178, 1998.
+\newblock
+\href{https://doi.org/10.1023/A:1007424614876}
+{Paper}.
+
+\bibitem{hazan2009}
+E. Hazan and C. Seshadhri.
+\newblock Efficient learning algorithms for changing environments.
+\newblock In \emph{Proceedings of the 26th International Conference on
+Machine Learning}, pages 393--400, 2009.
+\newblock
+\href{https://doi.org/10.1145/1553374.1553425}
+{Paper}.
+
+\bibitem{gradu2023}
+P. Gradu, E. Hazan, and E. Minasyan.
+\newblock Adaptive regret for control of time-varying dynamics.
+\newblock \emph{Proceedings of Machine Learning Research},
+211:560--572, 2023.
+\newblock The fixed-share meta-algorithm and interval-regret proof used here
+appear as Algorithm~2 and Lemma~A.2 in the extended version,
+\href{https://arxiv.org/pdf/2007.04393}
+{arXiv:2007.04393v3}.
+
+\bibitem{joulani2013}
+P. Joulani, A. Gyorgy, and C. Szepesvari.
+\newblock Online learning under delayed feedback.
+\newblock In \emph{Proceedings of the 30th International Conference on
+Machine Learning},
+\emph{Proceedings of Machine Learning Research} 28(3):1453--1461, 2013.
+\newblock
+\href{https://proceedings.mlr.press/v28/joulani13.html}
+{Paper}.
+
+\bibitem{gneiting2007}
+T. Gneiting and A. E. Raftery.
+\newblock Strictly proper scoring rules, prediction, and estimation.
+\newblock \emph{Journal of the American Statistical Association},
+102(477):359--378, 2007.
+\newblock
+\href{https://doi.org/10.1198/016214506000001437}
+{Paper}.
+
+\bibitem{besbes2015}
+O. Besbes, Y. Gur, and A. Zeevi.
+\newblock Non-stationary stochastic optimization.
+\newblock \emph{Operations Research}, 63(5):1227--1244, 2015.
+\newblock
+\href{https://doi.org/10.1287/opre.2015.1408}
+{Paper}.
+
+\bibitem{massart1990}
+P. Massart.
+\newblock The tight constant in the Dvoretzky--Kiefer--Wolfowitz inequality.
+\newblock \emph{The Annals of Probability}, 18(3):1269--1283, 1990.
+
+\end{thebibliography}
+
+\end{document}

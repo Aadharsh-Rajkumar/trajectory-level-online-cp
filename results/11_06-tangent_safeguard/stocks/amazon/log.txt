@@ -1,0 +1,24 @@
+  amazon: TRA cert + DtACI done in 46s
+  amazon: TRA cert + ACI done in 54s
+  amazon: TRA cert + PID done in 64s
+  amazon: TRA plug-in + DtACI done in 55s
+  amazon: Boole + DtACI done in 49s
+  amazon: Boole + ACI (previous) done in 50s
+  amazon: TRA cert + DtACI with hard thresholds done in 52s
+  amazon: TRA cert + ACI with hard thresholds done in 51s
+  amazon: TRA cert + PID with hard thresholds done in 57s
+/Users/aadharshrajkumar/Documents/trajectory_level_online_cp/experiments/run_1d.py:259: RuntimeWarning: Mean of empty slice
+  a.plot(rolling(np.nanmean(w, 1)), c=METHODS[m], lw=1.2, label=m)
+
+== amazon
+  TRA cert + DtACI           fail=0.107 last1000=0.091 width=0.1116 fallback=0.01 b̃=0.388 credit=-0.0000 q=[-0.39,0.10]
+  TRA cert + ACI             fail=0.094 last1000=0.095 width=0.1172 fallback=0.00 b̃=0.141 credit=-0.0000 q=[-0.09,0.24]
+  TRA cert + PID             fail=0.092 last1000=0.087 width=0.1215 fallback=0.00 b̃=0.102 credit=-0.0000 q=[-0.13,0.31]
+  TRA plug-in + DtACI        fail=0.106 last1000=0.088 width=0.1114 fallback=0.02 b̃=0.341 credit=0.0238 q=[-0.39,0.10]
+  Boole + DtACI              fail=0.110 last1000=0.080 width=0.1108 fallback=0.06 b̃=0.441 credit=0.0000 q=[-0.46,0.10]
+  Boole + ACI (previous)     fail=0.095 last1000=0.097 width=0.1149 fallback=0.00 b̃=0.144 credit=0.0000 q=[-0.09,0.22]
+  Static β/H (no feedback)   fail=0.091 last1000=0.085 width=0.1197
+  TRA cert + DtACI           hard thresholds: fail=0.149 fallback=0.25
+  TRA cert + ACI             hard thresholds: fail=0.093 fallback=0.02
+  TRA cert + PID             hard thresholds: fail=0.087 fallback=0.01
+results -> results/11_06/stocks/amazon

@@ -1,0 +1,165 @@
+{
+  "dataset": "blackberry",
+  "t_max": 2000,
+  "n_train": 500,
+  "window": 300,
+  "scaled": false,
+  "blowup_windows": [
+    [
+      0,
+      175
+    ],
+    [
+      1518,
+      1718
+    ]
+  ],
+  "zoom_method": "TRA cert + DtACI",
+  "crashed": {},
+  "safeguard": "tangent safeguard K=1, B=50",
+  "methods": {
+    "TRA cert + DtACI": {
+      "failure_rate": 0.116,
+      "failure_rate_last_1000": 0.105,
+      "failure_rate_ordinary": 0.11746835443037974,
+      "mean_width_ordinary": 0.2916298451362806,
+      "mean_alpha_sum": 0.19679004111140352,
+      "mean_budget": 0.30304229407554006,
+      "mean_issued_budget": 0.19679002283870364,
+      "peak_rolling_failure": 0.205,
+      "calibration_error": 0.016,
+      "calibration_bound": 0.032502283480468484,
+      "mean_credit": 7.026728003956687e-20,
+      "realized_slack": 0.032,
+      "fallback_rate": 0.0125,
+      "q_min": -0.38299999999999906,
+      "q_max": 0.026000000000000016,
+      "seconds": 54.8
+    },
+    "TRA cert + ACI": {
+      "failure_rate": 0.1045,
+      "failure_rate_last_1000": 0.112,
+      "failure_rate_ordinary": 0.1045,
+      "mean_width_ordinary": 0.3000152118430262,
+      "mean_alpha_sum": 0.14556214888775915,
+      "mean_budget": 0.12473915000000114,
+      "mean_issued_budget": 0.14556213603324825,
+      "peak_rolling_failure": 0.2,
+      "calibration_error": 0.00449999999999999,
+      "calibration_bound": 0.032502283480468484,
+      "mean_credit": -4.85722573273506e-20,
+      "realized_slack": 0.035,
+      "fallback_rate": 0.0,
+      "q_min": -0.14499999999999905,
+      "q_max": 0.18200000000000052,
+      "seconds": 64.3
+    },
+    "TRA cert + PID": {
+      "failure_rate": 0.103,
+      "failure_rate_last_1000": 0.127,
+      "failure_rate_ordinary": 0.103,
+      "mean_width_ordinary": 0.2629066735412521,
+      "mean_alpha_sum": 0.1534300350504903,
+      "mean_budget": 0.10123083,
+      "mean_issued_budget": 0.15415602326142294,
+      "peak_rolling_failure": 0.275,
+      "calibration_error": 0.002999999999999989,
+      "calibration_bound": 0.032502283480468484,
+      "mean_credit": -4.198030811863873e-19,
+      "realized_slack": 0.037,
+      "fallback_rate": 0.0,
+      "q_min": -0.11499999999999892,
+      "q_max": 0.36200000000000065,
+      "seconds": 57.1
+    },
+    "TRA plug-in + DtACI": {
+      "failure_rate": 0.116,
+      "failure_rate_last_1000": 0.104,
+      "failure_rate_ordinary": 0.11800610376398779,
+      "mean_width_ordinary": 0.2692139271812519,
+      "mean_alpha_sum": 0.2040960610753242,
+      "mean_budget": 0.2918657390433075,
+      "mean_issued_budget": 0.18444245010151167,
+      "peak_rolling_failure": 0.205,
+      "calibration_error": 0.016,
+      "calibration_bound": 0.032502283480468484,
+      "mean_credit": 0.019947047634099345,
+      "realized_slack": 0.031,
+      "fallback_rate": 0.017,
+      "q_min": -0.3779999999999988,
+      "q_max": 0.026000000000000016,
+      "seconds": 48.7
+    },
+    "Boole + DtACI": {
+      "failure_rate": 0.119,
+      "failure_rate_last_1000": 0.105,
+      "failure_rate_ordinary": 0.1209349593495935,
+      "mean_width_ordinary": 0.27379493668057353,
+      "mean_alpha_sum": 0.20954424175940492,
+      "mean_budget": 0.3501731998308013,
+      "mean_issued_budget": 0.20954415622538403,
+      "peak_rolling_failure": 0.21,
+      "calibration_error": 0.01899999999999999,
+      "calibration_bound": 0.032502283480468484,
+      "mean_credit": 4.583618940589124e-19,
+      "realized_slack": 0.0415,
+      "fallback_rate": 0.016,
+      "q_min": -0.43699999999999906,
+      "q_max": 0.026000000000000016,
+      "seconds": 49.2
+    },
+    "Boole + ACI (previous)": {
+      "failure_rate": 0.103,
+      "failure_rate_last_1000": 0.109,
+      "failure_rate_ordinary": 0.103,
+      "mean_width_ordinary": 0.27773102411020306,
+      "mean_alpha_sum": 0.16001936549990717,
+      "mean_budget": 0.1356806500000011,
+      "mean_issued_budget": 0.16001931373434322,
+      "peak_rolling_failure": 0.19,
+      "calibration_error": 0.002999999999999989,
+      "calibration_bound": 0.032502283480468484,
+      "mean_credit": 7.667477763817487e-19,
+      "realized_slack": 0.041,
+      "fallback_rate": 0.0,
+      "q_min": -0.11499999999999906,
+      "q_max": 0.18200000000000052,
+      "seconds": 49.4
+    },
+    "Static \u03b2/H (no feedback)": {
+      "failure_rate": 0.0815,
+      "failure_rate_last_1000": 0.114,
+      "mean_width_ordinary": 0.2662137737863468,
+      "mean_alpha_sum": 0.1
+    }
+  },
+  "hard_threshold_baseline": {
+    "TRA cert + DtACI": {
+      "failure_rate": 0.149,
+      "fallback_rate": 0.339,
+      "mean_width_ordinary": 0.18353911685961014,
+      "q_min": -1.0750000000000064,
+      "q_max": 0.026000000000000016,
+      "peak_rolling_failure": 0.29,
+      "seconds": 50.3
+    },
+    "TRA cert + ACI": {
+      "failure_rate": 0.103,
+      "fallback_rate": 0.0375,
+      "mean_width_ordinary": 0.2627169794668588,
+      "q_min": -0.117999999999999,
+      "q_max": 0.20200000000000057,
+      "peak_rolling_failure": 0.225,
+      "seconds": 56.6
+    },
+    "TRA cert + PID": {
+      "failure_rate": 0.081,
+      "fallback_rate": 0.0065,
+      "mean_width_ordinary": 0.28634662687632867,
+      "q_min": -0.064,
+      "q_max": 0.6520000000000007,
+      "peak_rolling_failure": 0.225,
+      "seconds": 48.2
+    }
+  }
+}

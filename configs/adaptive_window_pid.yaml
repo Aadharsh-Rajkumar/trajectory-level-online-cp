@@ -1,0 +1,75 @@
+# Reproducible algorithm selection; all other defaults are explicit.
+t_max: 100000
+beta: 0.1
+risk_mode: certified
+jax:
+  enable_x64: true
+  platform: auto
+history:
+  horizon: 10
+  alpha_min: 0.001
+  alpha_max: 0.25
+  grid_size: 51
+  capacity: 512
+  covariate_size: 0
+dependence:
+  kind: adaptive
+  assumption: stable_certified
+  delta: 0.05
+  window: 100
+  windows:
+  - 16
+  - 32
+  - 64
+  - 128
+  meta_eta: 0.1
+signal:
+  kind: learned
+  window: 100
+  refresh_pending: true
+controller:
+  kind: pid
+  budget_init: 0.1
+  gamma: 0.01
+  kp: 0.01
+  ki: 0.001
+  kd: 0.002
+  integral_limit: 20.0
+weights:
+  kind: failure_aware
+  smoothing: 0.05
+  max_step_norm: 0.05
+  min_weight: 0.01
+  max_weight: 0.8
+  failure_window: 100
+  eps_failure: 0.001
+  eps_efficiency: 1.0e-06
+solver:
+  mode: rti
+  qp_backend: admm
+  max_sqp_iterations: 1
+  feasibility_tol: 1.0e-06
+  step_tol: 1.0e-05
+  hessian_regularization: 1.0e-06
+  forest_kind: maximum_spanning_tree
+  qp_max_iterations: 400
+  qp_abs_tol: 1.0e-08
+  qp_rel_tol: 1.0e-07
+  qp_initial_penalty: 1.0
+  qp_penalty_update_interval: 25
+  line_search_steps: 20
+  restoration_steps: 24
+  armijo: 0.0001
+  backtrack_factor: 0.5
+  merit_penalty: 10.0
+safety:
+  eta_q: 0.01
+  q_init: 0.0
+  q_lower: -1.0
+  q_upper: 1.0
+runner:
+  jit: true
+  drain: true
+  seed: 0
+  collect_trace: false
+  output_dir: null

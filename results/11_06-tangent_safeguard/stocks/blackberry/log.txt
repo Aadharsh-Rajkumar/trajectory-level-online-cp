@@ -1,0 +1,24 @@
+  blackberry: TRA cert + DtACI done in 55s
+  blackberry: TRA cert + ACI done in 64s
+  blackberry: TRA cert + PID done in 57s
+  blackberry: TRA plug-in + DtACI done in 49s
+  blackberry: Boole + DtACI done in 49s
+  blackberry: Boole + ACI (previous) done in 49s
+  blackberry: TRA cert + DtACI with hard thresholds done in 50s
+  blackberry: TRA cert + ACI with hard thresholds done in 57s
+  blackberry: TRA cert + PID with hard thresholds done in 48s
+/Users/aadharshrajkumar/Documents/trajectory_level_online_cp/experiments/run_1d.py:259: RuntimeWarning: Mean of empty slice
+  a.plot(rolling(np.nanmean(w, 1)), c=METHODS[m], lw=1.2, label=m)
+
+== blackberry
+  TRA cert + DtACI           fail=0.116 last1000=0.105 width=0.2916 fallback=0.01 b̃=0.303 credit=0.0000 q=[-0.38,0.03]
+  TRA cert + ACI             fail=0.104 last1000=0.112 width=0.3 fallback=0.00 b̃=0.125 credit=-0.0000 q=[-0.14,0.18]
+  TRA cert + PID             fail=0.103 last1000=0.127 width=0.2629 fallback=0.00 b̃=0.101 credit=-0.0000 q=[-0.11,0.36]
+  TRA plug-in + DtACI        fail=0.116 last1000=0.104 width=0.2692 fallback=0.02 b̃=0.292 credit=0.0199 q=[-0.38,0.03]
+  Boole + DtACI              fail=0.119 last1000=0.105 width=0.2738 fallback=0.02 b̃=0.350 credit=0.0000 q=[-0.44,0.03]
+  Boole + ACI (previous)     fail=0.103 last1000=0.109 width=0.2777 fallback=0.00 b̃=0.136 credit=0.0000 q=[-0.11,0.18]
+  Static β/H (no feedback)   fail=0.082 last1000=0.114 width=0.2662
+  TRA cert + DtACI           hard thresholds: fail=0.149 fallback=0.34
+  TRA cert + ACI             hard thresholds: fail=0.103 fallback=0.04
+  TRA cert + PID             hard thresholds: fail=0.081 fallback=0.01
+results -> results/11_06/stocks/blackberry

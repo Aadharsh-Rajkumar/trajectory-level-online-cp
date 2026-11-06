@@ -1,0 +1,24 @@
+  drone_x: TRA cert + DtACI done in 47s
+  drone_x: TRA cert + ACI done in 46s
+  drone_x: TRA cert + PID done in 53s
+  drone_x: TRA plug-in + DtACI done in 50s
+  drone_x: Boole + DtACI done in 44s
+  drone_x: Boole + ACI (previous) done in 46s
+  drone_x: TRA cert + DtACI with hard thresholds done in 47s
+  drone_x: TRA cert + ACI with hard thresholds done in 46s
+  drone_x: TRA cert + PID with hard thresholds done in 41s
+/Users/aadharshrajkumar/Documents/trajectory_level_online_cp/experiments/run_1d.py:259: RuntimeWarning: Mean of empty slice
+  a.plot(rolling(np.nanmean(w, 1)), c=METHODS[m], lw=1.2, label=m)
+
+== drone_x
+  TRA cert + DtACI           fail=0.110 last1000=0.097 width=1.128 fallback=0.02 b̃=0.505 credit=0.0000 q=[-0.40,0.31]
+  TRA cert + ACI             fail=0.093 last1000=0.078 width=1.161 fallback=0.00 b̃=0.244 credit=-0.0000 q=[-0.31,0.41]
+  TRA cert + PID             fail=0.082 last1000=0.060 width=1.207 fallback=0.00 b̃=0.105 credit=0.0000 q=[-0.29,0.43]
+  TRA plug-in + DtACI        fail=0.108 last1000=0.078 width=1.081 fallback=0.08 b̃=0.480 credit=0.0636 q=[-0.44,0.30]
+  Boole + DtACI              fail=0.110 last1000=0.096 width=1.116 fallback=0.02 b̃=0.481 credit=0.0000 q=[-0.41,0.26]
+  Boole + ACI (previous)     fail=0.093 last1000=0.077 width=1.16 fallback=0.01 b̃=0.242 credit=0.0000 q=[-0.33,0.36]
+  Static β/H (no feedback)   fail=0.066 last1000=0.067 width=1.242
+  TRA cert + DtACI           hard thresholds: fail=0.108 fallback=0.05
+  TRA cert + ACI             hard thresholds: fail=0.079 fallback=0.05
+  TRA cert + PID             hard thresholds: fail=0.068 fallback=0.00
+results -> results/11_06/robotics/drone_x

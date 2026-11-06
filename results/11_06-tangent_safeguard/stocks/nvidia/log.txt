@@ -1,0 +1,24 @@
+  nvidia: TRA cert + DtACI done in 27s
+  nvidia: TRA cert + ACI done in 33s
+  nvidia: TRA cert + PID done in 46s
+  nvidia: TRA plug-in + DtACI done in 44s
+  nvidia: Boole + DtACI done in 37s
+  nvidia: Boole + ACI (previous) done in 39s
+  nvidia: TRA cert + DtACI with hard thresholds done in 39s
+  nvidia: TRA cert + ACI with hard thresholds done in 38s
+  nvidia: TRA cert + PID with hard thresholds done in 40s
+/Users/aadharshrajkumar/Documents/trajectory_level_online_cp/experiments/run_1d.py:259: RuntimeWarning: Mean of empty slice
+  a.plot(rolling(np.nanmean(w, 1)), c=METHODS[m], lw=1.2, label=m)
+
+== nvidia
+  TRA cert + DtACI           fail=0.115 last1000=0.114 width=0.1339 fallback=0.01 b̃=0.249 credit=-0.0000 q=[-0.37,0.01]
+  TRA cert + ACI             fail=0.102 last1000=0.099 width=0.1357 fallback=0.00 b̃=0.123 credit=-0.0000 q=[-0.21,0.06]
+  TRA cert + PID             fail=0.098 last1000=0.091 width=0.1369 fallback=0.00 b̃=0.097 credit=-0.0000 q=[-0.19,0.10]
+  TRA plug-in + DtACI        fail=0.117 last1000=0.113 width=0.1327 fallback=0.04 b̃=0.248 credit=0.0113 q=[-0.40,0.01]
+  Boole + DtACI              fail=0.114 last1000=0.105 width=0.1319 fallback=0.04 b̃=0.299 credit=0.0000 q=[-0.43,0.01]
+  Boole + ACI (previous)     fail=0.102 last1000=0.102 width=0.1342 fallback=0.00 b̃=0.126 credit=0.0000 q=[-0.21,0.06]
+  Static β/H (no feedback)   fail=0.105 last1000=0.080 width=0.1315
+  TRA cert + DtACI           hard thresholds: fail=0.152 fallback=0.35
+  TRA cert + ACI             hard thresholds: fail=0.098 fallback=0.08
+  TRA cert + PID             hard thresholds: fail=0.097 fallback=0.01
+results -> results/11_06/stocks/nvidia

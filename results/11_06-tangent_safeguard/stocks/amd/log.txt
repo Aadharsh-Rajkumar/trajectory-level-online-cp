@@ -1,0 +1,24 @@
+  amd: TRA cert + DtACI done in 45s
+  amd: TRA cert + ACI done in 42s
+  amd: TRA cert + PID done in 41s
+  amd: TRA plug-in + DtACI done in 47s
+  amd: Boole + DtACI done in 44s
+  amd: Boole + ACI (previous) done in 41s
+  amd: TRA cert + DtACI with hard thresholds done in 42s
+  amd: TRA cert + ACI with hard thresholds done in 47s
+  amd: TRA cert + PID with hard thresholds done in 48s
+/Users/aadharshrajkumar/Documents/trajectory_level_online_cp/experiments/run_1d.py:259: RuntimeWarning: Mean of empty slice
+  a.plot(rolling(np.nanmean(w, 1)), c=METHODS[m], lw=1.2, label=m)
+
+== amd
+  TRA cert + DtACI           fail=0.111 last1000=0.083 width=0.3153 fallback=0.04 b̃=0.342 credit=0.0000 q=[-0.47,0.03]
+  TRA cert + ACI             fail=0.092 last1000=0.085 width=0.3067 fallback=0.00 b̃=0.111 credit=-0.0000 q=[-0.11,0.14]
+  TRA cert + PID             fail=0.090 last1000=0.082 width=0.287 fallback=0.00 b̃=0.104 credit=-0.0000 q=[-0.08,0.19]
+  TRA plug-in + DtACI        fail=0.111 last1000=0.085 width=0.3134 fallback=0.02 b̃=0.324 credit=0.0101 q=[-0.45,0.03]
+  Boole + DtACI              fail=0.116 last1000=0.094 width=0.3084 fallback=0.04 b̃=0.369 credit=-0.0000 q=[-0.46,0.03]
+  Boole + ACI (previous)     fail=0.093 last1000=0.090 width=0.2798 fallback=0.00 b̃=0.123 credit=-0.0000 q=[-0.10,0.14]
+  Static β/H (no feedback)   fail=0.081 last1000=0.077 width=0.2738
+  TRA cert + DtACI           hard thresholds: fail=0.150 fallback=0.31
+  TRA cert + ACI             hard thresholds: fail=0.092 fallback=0.05
+  TRA cert + PID             hard thresholds: fail=0.083 fallback=0.01
+results -> results/11_06/stocks/amd

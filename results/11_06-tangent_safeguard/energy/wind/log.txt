@@ -1,0 +1,24 @@
+  wind: TRA cert + DtACI done in 17s
+  wind: TRA cert + ACI done in 14s
+  wind: TRA cert + PID done in 14s
+  wind: TRA plug-in + DtACI done in 14s
+  wind: Boole + DtACI done in 13s
+  wind: Boole + ACI (previous) done in 13s
+  wind: TRA cert + DtACI with hard thresholds done in 13s
+  wind: TRA cert + ACI with hard thresholds done in 14s
+  wind: TRA cert + PID with hard thresholds done in 14s
+/Users/aadharshrajkumar/Documents/trajectory_level_online_cp/experiments/run_1d.py:259: RuntimeWarning: Mean of empty slice
+  a.plot(rolling(np.nanmean(w, 1)), c=METHODS[m], lw=1.2, label=m)
+
+== wind
+  TRA cert + DtACI           fail=0.150 last1000=0.150 width=4.36 fallback=0.00 b̃=0.349 credit=0.0000 q=[-0.29,0.05]
+  TRA cert + ACI             fail=0.089 last1000=0.089 width=5.209 fallback=0.00 b̃=0.111 credit=0.0000 q=[-0.06,0.08]
+  TRA cert + PID             fail=0.075 last1000=0.075 width=5.223 fallback=0.00 b̃=0.104 credit=-0.0000 q=[-0.05,0.10]
+  TRA plug-in + DtACI        fail=0.168 last1000=0.168 width=3.7 fallback=0.01 b̃=0.274 credit=0.1765 q=[-0.37,0.05]
+  Boole + DtACI              fail=0.136 last1000=0.136 width=3.958 fallback=0.00 b̃=0.400 credit=-0.0000 q=[-0.22,0.05]
+  Boole + ACI (previous)     fail=0.080 last1000=0.080 width=5.082 fallback=0.00 b̃=0.126 credit=0.0000 q=[-0.06,0.09]
+  Static β/H (no feedback)   fail=0.061 last1000=0.061 width=5.424
+  TRA cert + DtACI           hard thresholds: fail=0.168 fallback=0.12
+  TRA cert + ACI             hard thresholds: fail=0.077 fallback=0.07
+  TRA cert + PID             hard thresholds: fail=0.068 fallback=0.01
+results -> results/11_06/energy/wind

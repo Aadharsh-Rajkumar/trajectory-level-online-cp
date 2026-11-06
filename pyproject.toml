@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "trajectory-risk"
+version = "0.1.0"
+description = "JAX foundations for trajectory-level online conformal risk allocation"
+requires-python = ">=3.11"
+dependencies = ["jax>=0.4.36", "pyrallis>=0.3.1", "PyYAML>=6"]
+
+[project.optional-dependencies]
+test = ["pytest>=8", "numpy>=1.26"]
+reference = ["scipy>=1.12", "jaxopt>=0.8"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+

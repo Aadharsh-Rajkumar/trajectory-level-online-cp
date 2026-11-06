@@ -1,0 +1,22 @@
+  solar: TRA cert + DtACI done in 53s
+  solar: TRA cert + ACI done in 45s
+  solar: TRA cert + PID done in 48s
+  solar: TRA plug-in + DtACI done in 46s
+  solar: Boole + DtACI done in 46s
+  solar: Boole + ACI (previous) done in 45s
+  solar: TRA cert + DtACI with hard thresholds done in 45s
+  solar: TRA cert + ACI with hard thresholds done in 48s
+  solar: TRA cert + PID with hard thresholds done in 43s
+
+== solar
+  TRA cert + DtACI           fail=0.102 last1000=0.104 width=672.9 fallback=0.00 b̃=0.226 credit=-0.0000 q=[-0.09,0.07]
+  TRA cert + ACI             fail=0.098 last1000=0.108 width=665.7 fallback=0.00 b̃=0.173 credit=-0.0000 q=[-0.01,0.16]
+  TRA cert + PID             fail=0.093 last1000=0.111 width=666.5 fallback=0.00 b̃=0.113 credit=-0.0000 q=[0.00,0.26]
+  TRA plug-in + DtACI        fail=0.103 last1000=0.101 width=662.1 fallback=0.00 b̃=0.196 credit=0.0754 q=[-0.18,0.07]
+  Boole + DtACI              fail=0.102 last1000=0.104 width=656.4 fallback=0.00 b̃=0.273 credit=0.0000 q=[-0.11,0.07]
+  Boole + ACI (previous)     fail=0.098 last1000=0.110 width=655.4 fallback=0.00 b̃=0.194 credit=-0.0000 q=[0.00,0.19]
+  Static β/H (no feedback)   fail=0.045 last1000=0.058 width=718.1
+  TRA cert + DtACI           hard thresholds: fail=0.113 fallback=0.00
+  TRA cert + ACI             hard thresholds: fail=0.098 fallback=0.00
+  TRA cert + PID             hard thresholds: fail=0.050 fallback=0.00
+results -> results/11_06/energy/solar

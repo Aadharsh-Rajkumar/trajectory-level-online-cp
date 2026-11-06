@@ -1,0 +1,24 @@
+  regime_shift: TRA cert + DtACI done in 42s
+  regime_shift: TRA cert + ACI done in 54s
+  regime_shift: TRA cert + PID done in 48s
+  regime_shift: TRA plug-in + DtACI done in 45s
+  regime_shift: Boole + DtACI done in 46s
+  regime_shift: Boole + ACI (previous) done in 46s
+  regime_shift: TRA cert + DtACI with hard thresholds done in 46s
+  regime_shift: TRA cert + ACI with hard thresholds done in 45s
+  regime_shift: TRA cert + PID with hard thresholds done in 51s
+/Users/aadharshrajkumar/Documents/trajectory_level_online_cp/experiments/run_1d.py:259: RuntimeWarning: Mean of empty slice
+  a.plot(rolling(np.nanmean(w, 1)), c=METHODS[m], lw=1.2, label=m)
+
+== regime_shift
+  TRA cert + DtACI           fail=0.118 last1000=0.112 width=6.992 fallback=0.01 b̃=0.380 credit=-0.0000 q=[-0.38,0.06]
+  TRA cert + ACI             fail=0.104 last1000=0.118 width=7.307 fallback=0.00 b̃=0.152 credit=0.0000 q=[-0.15,0.37]
+  TRA cert + PID             fail=0.102 last1000=0.118 width=7.293 fallback=0.00 b̃=0.101 credit=-0.0000 q=[-0.12,0.40]
+  TRA plug-in + DtACI        fail=0.118 last1000=0.113 width=7.039 fallback=0.01 b̃=0.366 credit=0.0065 q=[-0.37,0.06]
+  Boole + DtACI              fail=0.122 last1000=0.117 width=6.895 fallback=0.03 b̃=0.439 credit=0.0000 q=[-0.42,0.06]
+  Boole + ACI (previous)     fail=0.104 last1000=0.122 width=7.055 fallback=0.00 b̃=0.172 credit=-0.0000 q=[-0.16,0.40]
+  Static β/H (no feedback)   fail=0.086 last1000=0.078 width=7.364
+  TRA cert + DtACI           hard thresholds: fail=0.151 fallback=0.15
+  TRA cert + ACI             hard thresholds: fail=0.103 fallback=0.06
+  TRA cert + PID             hard thresholds: fail=0.086 fallback=0.01
+results -> results/11_06/synthetic/regime_shift
