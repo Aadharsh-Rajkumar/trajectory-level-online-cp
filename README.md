@@ -1,5 +1,7 @@
 # Trajectory risk allocation
 
+**This is a continuation of my work from this [GitHub repository](https://github.com/Aadharsh-Rajkumar/multistep-CP).** Now using JAX.
+
 Research implementation of the specifications in `docs/online_trajectory_cp.pdf`
 and `docs/bivariate_theorems.pdf`, with the user's subsequent decisions taking
 precedence. **All seven phases are implemented:** configuration, numerical history,
